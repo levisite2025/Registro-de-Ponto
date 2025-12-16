@@ -4,6 +4,20 @@ const USERS_KEY = 'pontocerto_users';
 const LOGS_KEY = 'pontocerto_logs';
 const SETTINGS_KEY = 'pontocerto_settings';
 
+// Helper for ID generation compatible with all contexts (HTTP/HTTPS)
+export const generateId = (): string => {
+  // Try native crypto if secure context
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch (e) {
+      // Fallback if crypto.randomUUID fails (e.g. insecure context in Chrome)
+    }
+  }
+  // Robust Fallback
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+};
+
 // Initialize with default admin if empty
 export const initStorage = () => {
   const users = localStorage.getItem(USERS_KEY);

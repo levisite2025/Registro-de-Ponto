@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AuthState, User, Role, TimeLog, LogType, CompanySettings } from './types';
-import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings } from './services/storageService';
+import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings, generateId } from './services/storageService';
 import { generateMonthlyReportAnalysis } from './services/geminiService';
 import { sendEmail, getNotifications, markAllAsRead, checkEndOfDayReminder, EmailNotification, clearNotifications } from './services/notificationService';
 import { generateEmployeePDF } from './services/pdfService';
@@ -227,7 +227,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
   const handleRegister = (type: LogType) => {
     const now = new Date();
     const newLog: TimeLog = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       userId: user.id,
       timestamp: now.toISOString(),
       type
@@ -581,7 +581,7 @@ const AdminDashboard: React.FC = () => {
         if (!newUser.name || !newUser.email || !newUser.password) return;
         
         const user: User = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             name: newUser.name,
             email: newUser.email,
             password: newUser.password,

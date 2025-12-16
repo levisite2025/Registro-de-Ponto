@@ -1,4 +1,5 @@
 import { User } from '../types';
+import { generateId } from './storageService';
 
 export interface EmailNotification {
   id: string;
@@ -19,7 +20,7 @@ export const getNotifications = (): EmailNotification[] => {
 export const sendEmail = (to: string, subject: string, body: string) => {
   const notifications = getNotifications();
   const newEmail: EmailNotification = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     to,
     subject,
     body,
