@@ -1,0 +1,994 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { AuthState, User, Role, TimeLog, LogType, CompanySettings } from './types';
+import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings } from './services/storageService';
+import { generateMonthlyReportAnalysis } from './services/geminiService';
+import { sendEmail, getNotifications, markAllAsRead, checkEndOfDayReminder, EmailNotification, clearNotifications } from './services/notificationService';
+import { generateEmployeePDF } from './services/pdfService';
+import { Button } from './components/Button';
+import { Modal } from './components/Modal';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import ReactMarkdown from 'react-markdown';
+
+// --- CONFIGURAÇÃO DA LOGO ---
+const COMPANY_LOGO = "https://placehold.co/300x100/ffffff/004aad/png?text=Espaco+Hidro&font=roboto"; 
+
+// --- ICONS ---
+const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const LogOutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></svg>;
+const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>;
+const MailIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>;
+const PdfIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
+const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
+const SunIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>;
+const CoffeeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>;
+
+// --- HELPER COMPONENTS ---
+
+const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const users = getUsers();
+    const user = users.find(u => u.email === email && u.password === password);
+    if (user) {
+      onLogin(user);
+    } else {
+      setError('Credenciais inválidas. Tente admin@empresa.com / admin');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-800 to-teal-800 p-4 relative overflow-hidden">
+      {/* Abstract Shapes */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-teal-500/20 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-4xl w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10">
+        
+        {/* Left Side: Brand Area */}
+        <div className="md:w-1/2 bg-slate-50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 relative">
+            <div className="mb-8 p-6 bg-white rounded-full shadow-lg">
+                <img 
+                    src={COMPANY_LOGO} 
+                    alt="Espaço Hidro" 
+                    className="h-16 w-auto object-contain"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+            </div>
+            <h1 className="text-3xl font-extrabold text-brand-900 mb-2">PontoCerto</h1>
+            <p className="text-slate-500 text-center text-sm px-8">Sistema inteligente de gestão de ponto e produtividade.</p>
+        </div>
+
+        {/* Right Side: Form */}
+        <div className="md:w-1/2 p-8 md:p-12">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center md:text-left">Bem-vindo de volta</h2>
+            
+            <form className="space-y-5" onSubmit={handleSubmit}>
+            {error && <div className="text-red-600 bg-red-50 text-sm p-3 rounded-lg border border-red-100 flex items-center justify-center">{error}</div>}
+            <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Email Corporativo</label>
+                <input 
+                type="email" 
+                required 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800"
+                placeholder="seunome@empresa.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Senha</label>
+                <input 
+                type="password" 
+                required 
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                />
+            </div>
+            <Button type="submit" className="w-full py-3 text-lg shadow-lg shadow-blue-500/30">Acessar Sistema</Button>
+            </form>
+            
+            <div className="mt-6 text-center">
+                <p className="text-xs text-slate-400">
+                Demo: admin@empresa.com / admin
+                </p>
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LogBadge: React.FC<{ type: LogType }> = ({ type }) => {
+  const styles = {
+    [LogType.ENTRY]: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    [LogType.LUNCH_START]: "bg-amber-100 text-amber-800 border-amber-200",
+    [LogType.LUNCH_END]: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    [LogType.EXIT]: "bg-rose-100 text-rose-800 border-rose-200",
+  };
+  const icons = {
+    [LogType.ENTRY]: "→",
+    [LogType.LUNCH_START]: "☕",
+    [LogType.LUNCH_END]: "↩",
+    [LogType.EXIT]: "←",
+  };
+  const labels = {
+    [LogType.ENTRY]: "Entrada",
+    [LogType.LUNCH_START]: "Saída Almoço",
+    [LogType.LUNCH_END]: "Volta Almoço",
+    [LogType.EXIT]: "Saída",
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border ${styles[type]}`}>
+      <span className="mr-1.5 opacity-70">{icons[type]}</span>
+      {labels[type]}
+    </span>
+  );
+};
+
+// Helper to calculate time deviation
+const getTimeDeviation = (log: TimeLog, settings: CompanySettings) => {
+    const logDate = new Date(log.timestamp);
+    const logMinutes = logDate.getHours() * 60 + logDate.getMinutes();
+
+    const getSettingMinutes = (timeStr: string) => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    if (log.type === LogType.ENTRY) {
+        const startMinutes = getSettingMinutes(settings.workStart);
+        // Tolerance of 5 minutes
+        const diff = logMinutes - startMinutes;
+        if (diff > 5) return { status: 'late', diff, label: `+${diff}m` };
+    }
+
+    if (log.type === LogType.EXIT) {
+        const endMinutes = getSettingMinutes(settings.workEnd);
+        const diff = endMinutes - logMinutes;
+        if (diff > 5) return { status: 'early', diff, label: `-${diff}m` };
+    }
+
+    return null;
+};
+
+
+// --- DASHBOARDS ---
+
+const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ user, currentUserRole }) => {
+  const [logs, setLogs] = useState<TimeLog[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
+  const [settings, setSettings] = useState<CompanySettings>(getSettings());
+  
+  // Filtering state
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterType, setFilterType] = useState<string>('ALL');
+
+  // Reporting state
+  const [analysis, setAnalysis] = useState<string>("");
+  const [analyzing, setAnalyzing] = useState(false);
+
+  useEffect(() => {
+    setLogs(getUserLogs(user.id));
+    setSettings(getSettings());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [user.id]);
+
+  // Check for Reminder
+  useEffect(() => {
+    if (currentUserRole === Role.EMPLOYEE) {
+        // Check current logs for today
+        const today = new Date().toLocaleDateString();
+        const todaysLogs = logs.filter(l => new Date(l.timestamp).toLocaleDateString() === today);
+        const hasEntry = todaysLogs.some(l => l.type === LogType.ENTRY);
+        const hasExit = todaysLogs.some(l => l.type === LogType.EXIT);
+        checkEndOfDayReminder(user, hasEntry, hasExit);
+    }
+  }, [logs, user, currentUserRole]);
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+        const logDate = new Date(log.timestamp);
+        // Normalize time for date comparison
+        const logDateStr = log.timestamp.split('T')[0];
+        
+        if (filterStartDate && logDateStr < filterStartDate) return false;
+        if (filterEndDate && logDateStr > filterEndDate) return false;
+        if (filterType !== 'ALL' && log.type !== filterType) return false;
+        
+        return true;
+    });
+  }, [logs, filterStartDate, filterEndDate, filterType]);
+
+  const clearFilters = () => {
+    setFilterStartDate('');
+    setFilterEndDate('');
+    setFilterType('ALL');
+  };
+
+  const handleRegister = (type: LogType) => {
+    const now = new Date();
+    const newLog: TimeLog = {
+      id: crypto.randomUUID(),
+      userId: user.id,
+      timestamp: now.toISOString(),
+      type
+    };
+    saveLog(newLog);
+    
+    // EMAIL NOTIFICATION: Successful Registration
+    sendEmail(
+        user.email,
+        `Registro de Ponto Confirmado: ${type}`,
+        `Olá ${user.name}, seu registro de ${type} foi realizado com sucesso em ${now.toLocaleDateString()} às ${now.toLocaleTimeString()}.`
+    );
+
+    setLogs(getUserLogs(user.id));
+  };
+
+  const handleEdit = (log: TimeLog) => {
+    const d = new Date(log.timestamp);
+    const dateStr = d.toISOString().split('T')[0];
+    const timeStr = d.toTimeString().substring(0, 5);
+    
+    setEditDate(dateStr);
+    setEditTime(timeStr);
+    setIsEditing(log.id);
+  };
+
+  const saveEdit = () => {
+    if (!isEditing) return;
+    const logToEdit = logs.find(l => l.id === isEditing);
+    if (!logToEdit) return;
+
+    const oldDate = new Date(logToEdit.timestamp);
+    const newTimestamp = new Date(`${editDate}T${editTime}`).toISOString();
+    const updatedLog = { ...logToEdit, timestamp: newTimestamp, edited: true };
+    saveLog(updatedLog);
+    
+    // EMAIL NOTIFICATION: Correction Logic
+    if (currentUserRole === Role.EMPLOYEE) {
+        // Employee logic: "Request" correction (simulated via edit)
+        sendEmail(
+            "admin@empresa.com",
+            `Solicitação de Correção: ${user.name}`,
+            `O funcionário ${user.name} solicitou/realizou uma correção no registro de ${oldDate.toLocaleString()} para ${new Date(newTimestamp).toLocaleString()}.`
+        );
+        // Copy to user
+        sendEmail(
+            user.email,
+            "Solicitação de Correção Enviada",
+            `Sua correção do registro foi enviada para o sistema com sucesso.`
+        );
+    } else {
+        // Admin logic: "Approve/Fix" correction
+        sendEmail(
+            user.email,
+            "Correção de Ponto Aprovada/Realizada",
+            `Uma correção foi realizada em seu registro de ponto pelo Administrador. Novo horário: ${new Date(newTimestamp).toLocaleString()}.`
+        );
+    }
+
+    setLogs(getUserLogs(user.id));
+    setIsEditing(null);
+  };
+
+  const handleAnalysis = async () => {
+    setAnalyzing(true);
+    const monthName = currentTime.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    const currentSettings = getSettings();
+    const result = await generateMonthlyReportAnalysis(user, logs, currentSettings, monthName);
+    setAnalysis(result || "Sem dados.");
+    setAnalyzing(false);
+  };
+
+  // Chart Data Preparation
+  const chartData = React.useMemo(() => {
+    const data: Record<string, number> = {};
+    logs.forEach(l => {
+        const day = new Date(l.timestamp).toLocaleDateString('pt-BR', {day: '2-digit'});
+        data[day] = (data[day] || 0) + 1;
+    });
+    return Object.entries(data).map(([day, count]) => ({ day, registros: count })).reverse().slice(0, 7);
+  }, [logs]);
+
+  const lastLog = logs.length > 0 ? logs[0] : null;
+  const lastType = lastLog ? lastLog.type : LogType.EXIT;
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Hero Section: Clock & Actions */}
+      {currentUserRole === Role.EMPLOYEE && (
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900 via-brand-700 to-teal-700 shadow-xl text-white p-6 sm:p-10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left">
+                <p className="text-brand-100 font-medium text-lg mb-1">{currentTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                <div className="text-6xl sm:text-7xl font-bold font-mono tracking-tight text-white drop-shadow-sm">
+                    {currentTime.toLocaleTimeString('pt-BR')}
+                </div>
+                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs text-brand-50">
+                    <span className="w-2 h-2 rounded-full bg-teal-400 mr-2 animate-pulse"></span>
+                    Turno: {settings.workStart} - {settings.workEnd}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                <button 
+                    onClick={() => handleRegister(LogType.ENTRY)} 
+                    disabled={lastType === LogType.ENTRY || lastType === LogType.LUNCH_START || lastType === LogType.LUNCH_END}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                >
+                    <div className="bg-emerald-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><SunIcon /></div>
+                    <span className="font-semibold text-sm">Entrada</span>
+                </button>
+
+                <button 
+                    onClick={() => handleRegister(LogType.LUNCH_START)} 
+                    disabled={lastType !== LogType.ENTRY}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                >
+                     <div className="bg-amber-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><CoffeeIcon /></div>
+                    <span className="font-semibold text-sm">Sair Almoço</span>
+                </button>
+
+                <button 
+                    onClick={() => handleRegister(LogType.LUNCH_END)} 
+                    disabled={lastType !== LogType.LUNCH_START}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                >
+                    <div className="bg-indigo-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><CoffeeIcon /></div>
+                    <span className="font-semibold text-sm">Voltar Almoço</span>
+                </button>
+
+                <button 
+                    onClick={() => handleRegister(LogType.EXIT)} 
+                    disabled={lastType === LogType.EXIT || lastType === LogType.LUNCH_START}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                >
+                    <div className="bg-rose-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><LogOutIcon /></div>
+                    <span className="font-semibold text-sm">Saída</span>
+                </button>
+            </div>
+        </div>
+      </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* History Table */}
+        <div className="lg:col-span-2 space-y-6">
+            
+            {/* Filter Section */}
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex items-center text-slate-700 font-bold mb-4">
+                    <FilterIcon /> <span className="ml-2">Filtrar Registros</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label className="block text-xs text-slate-400 font-semibold uppercase mb-1">De</label>
+                        <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs text-slate-400 font-semibold uppercase mb-1">Até</label>
+                        <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs text-slate-400 font-semibold uppercase mb-1">Tipo</label>
+                        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none">
+                            <option value="ALL">Todos</option>
+                            <option value={LogType.ENTRY}>Entrada</option>
+                            <option value={LogType.LUNCH_START}>Sair Almoço</option>
+                            <option value={LogType.LUNCH_END}>Voltar Almoço</option>
+                            <option value={LogType.EXIT}>Saída</option>
+                        </select>
+                    </div>
+                    <div className="flex items-end">
+                        <Button onClick={clearFilters} variant="secondary" className="w-full text-sm">Limpar</Button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
+                    <h3 className="text-xl font-bold text-slate-800">Histórico ({filteredLogs.length})</h3>
+                    <Button variant="outline" onClick={handleAnalysis} isLoading={analyzing} className="text-sm w-full sm:w-auto hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200" title="Gerar análise com IA">
+                    <SparklesIcon /> <span className="ml-2">Analisar com IA</span>
+                    </Button>
+                </div>
+            
+            {/* Mobile Card View */}
+            <div className="block sm:hidden divide-y divide-slate-100">
+                {filteredLogs.length === 0 ? (
+                    <div className="text-center text-slate-400 py-10">Nenhum registro encontrado.</div>
+                ) : filteredLogs.map(log => {
+                    const deviation = getTimeDeviation(log, settings);
+                    return (
+                        <div key={log.id} className="p-4 bg-white flex justify-between items-center relative">
+                            {deviation && (
+                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${deviation.status === 'late' || deviation.status === 'early' ? 'bg-red-500' : ''}`}></div>
+                            )}
+                            <div className="flex-1">
+                                <div className="font-semibold text-slate-800 flex items-center">
+                                    {new Date(log.timestamp).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}
+                                    <span className="mx-2 text-slate-300">|</span>
+                                    <span className="font-mono text-slate-600">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                </div>
+                                <div className="mt-2 flex items-center flex-wrap gap-2">
+                                    <LogBadge type={log.type} />
+                                    {deviation && (
+                                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold border border-red-100">
+                                            {deviation.label}
+                                        </span>
+                                    )}
+                                    {log.edited && <span className="text-[10px] text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">Editado</span>}
+                                </div>
+                            </div>
+                            <button onClick={() => handleEdit(log)} className="p-2 ml-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors" title="Corrigir Registro">
+                                <EditIcon />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                    <tr>
+                    <th className="p-4 rounded-tl-lg">Data</th>
+                    <th className="p-4">Hora</th>
+                    <th className="p-4">Tipo</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right rounded-tr-lg">Ações</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {filteredLogs.length === 0 ? (
+                        <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhum registro encontrado.</td></tr>
+                    ) : filteredLogs.map(log => {
+                        const deviation = getTimeDeviation(log, settings);
+                        return (
+                        <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
+                            <td className="p-4 font-medium text-slate-800">{new Date(log.timestamp).toLocaleDateString('pt-BR')}</td>
+                            <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
+                                    {deviation && (
+                                        <span className="text-xs text-red-500 font-bold bg-red-50 px-1.5 py-0.5 rounded-full">
+                                            {deviation.label}
+                                        </span>
+                                    )}
+                                </div>
+                            </td>
+                            <td className="p-4"><LogBadge type={log.type} /></td>
+                            <td className="p-4">
+                                {log.edited ? <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium border border-amber-100">Corrigido</span> : <span className="text-xs text-slate-400">-</span>}
+                            </td>
+                            <td className="p-4 text-right">
+                            <button onClick={() => handleEdit(log)} className="text-slate-400 hover:text-brand-600 p-2 hover:bg-brand-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Corrigir Registro">
+                                <EditIcon />
+                            </button>
+                            </td>
+                        </tr>
+                        );
+                    })}
+                </tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+
+        {/* Stats & Report */}
+        <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex flex-col h-[400px]">
+                <h3 className="text-lg font-bold text-slate-800 mb-6">Atividade Recente</h3>
+                <div className="flex-1 w-full -ml-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={12} stroke="#94a3b8" />
+                            <YAxis axisLine={false} tickLine={false} fontSize={12} allowDecimals={false} stroke="#94a3b8" />
+                            <Tooltip 
+                                cursor={{fill: '#f8fafc'}} 
+                                contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                            />
+                            <Bar dataKey="registros" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={40} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {analysis && (
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm p-6 border border-indigo-100">
+                    <h3 className="text-indigo-900 font-bold mb-4 flex items-center text-lg">
+                        <div className="p-1.5 bg-indigo-100 rounded-lg mr-2 text-indigo-600"><SparklesIcon /></div>
+                        Insights IA
+                    </h3>
+                    <div className="prose prose-sm prose-indigo max-h-80 overflow-y-auto custom-scrollbar">
+                        <ReactMarkdown>{analysis}</ReactMarkdown>
+                    </div>
+                </div>
+            )}
+        </div>
+      </div>
+
+      {/* Edit Modal */}
+      <Modal isOpen={!!isEditing} onClose={() => setIsEditing(null)} title={currentUserRole === Role.ADMIN ? "Aprovar/Corrigir Registro" : "Solicitar Correção"}>
+        <div className="space-y-5">
+            <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                {currentUserRole === Role.ADMIN 
+                    ? "Ao salvar, um email de notificação será enviado ao funcionário informando a correção."
+                    : "Ao salvar, um email será enviado ao seu gestor solicitando a correção deste registro."
+                }
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nova Data</label>
+                    <input type="date" className="w-full border border-slate-200 rounded-xl p-3 text-slate-700 focus:ring-brand-500 focus:border-brand-500 outline-none" value={editDate} onChange={e => setEditDate(e.target.value)} />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Novo Horário</label>
+                    <input type="time" className="w-full border border-slate-200 rounded-xl p-3 text-slate-700 focus:ring-brand-500 focus:border-brand-500 outline-none" value={editTime} onChange={e => setEditTime(e.target.value)} />
+                </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-slate-100">
+                <Button variant="ghost" onClick={() => setIsEditing(null)}>Cancelar</Button>
+                <Button onClick={saveEdit}>
+                    {currentUserRole === Role.ADMIN ? "Confirmar Ajuste" : "Enviar Solicitação"}
+                </Button>
+            </div>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+const AdminDashboard: React.FC = () => {
+    const [users, setUsers] = useState<User[]>([]);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [newUser, setNewUser] = useState<Partial<User>>({ role: Role.EMPLOYEE });
+    const [settings, setSettingsState] = useState<CompanySettings>(getSettings());
+    const [selectedUserForView, setSelectedUserForView] = useState<User | null>(null);
+
+    useEffect(() => {
+        setUsers(getUsers());
+        setSettingsState(getSettings());
+    }, []);
+
+    const handleAddUser = () => {
+        if (!newUser.name || !newUser.email || !newUser.password) return;
+        
+        const user: User = {
+            id: crypto.randomUUID(),
+            name: newUser.name,
+            email: newUser.email,
+            password: newUser.password,
+            role: newUser.role || Role.EMPLOYEE,
+            position: newUser.position || 'Funcionário'
+        };
+        saveUser(user);
+        
+        // Notify new user via simulated email
+        sendEmail(
+            user.email,
+            "Bem-vindo ao PontoCerto",
+            `Sua conta foi criada. Login: ${user.email}, Senha: ${user.password}`
+        );
+        
+        setUsers(getUsers());
+        setIsAddModalOpen(false);
+        setNewUser({ role: Role.EMPLOYEE });
+    };
+
+    const handleSaveSettings = () => {
+        saveSettings(settings);
+        setIsSettingsModalOpen(false);
+        // Force refresh via standard page reload or context would be better, but simple update here
+        alert("Configurações salvas com sucesso!");
+    };
+
+    const handleDelete = (id: string) => {
+        if (window.confirm("Tem certeza que deseja remover este funcionário?")) {
+            deleteUser(id);
+            setUsers(getUsers());
+        }
+    };
+
+    const handleGeneratePDF = (e: React.MouseEvent, user: User) => {
+      e.stopPropagation(); // Prevent opening the details view
+      const userLogs = getUserLogs(user.id);
+      generateEmployeePDF(user, userLogs, settings);
+    };
+
+    if (selectedUserForView) {
+        return (
+            <div className="animate-fade-in">
+                <Button variant="outline" className="mb-6" onClick={() => setSelectedUserForView(null)} title="Voltar para a lista de funcionários">
+                    &larr; Voltar para Lista
+                </Button>
+                <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                     <div className="h-16 w-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-2xl font-bold">
+                        {selectedUserForView.name.charAt(0)}
+                     </div>
+                     <div>
+                        <h2 className="text-2xl font-bold text-slate-800">{selectedUserForView.name}</h2>
+                        <p className="text-slate-500">{selectedUserForView.position} • {selectedUserForView.email}</p>
+                     </div>
+                </div>
+                <EmployeeDashboard user={selectedUserForView} currentUserRole={Role.ADMIN} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-800">Equipe</h2>
+                    <p className="text-slate-500 mt-1">Gerencie os colaboradores do Espaço Hidro.</p>
+                </div>
+                <div className="flex space-x-3 w-full md:w-auto">
+                    <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)} title="Configurações da Empresa" className="flex-1 md:flex-none">
+                        <SettingsIcon />
+                    </Button>
+                    <Button onClick={() => setIsAddModalOpen(true)} title="Adicionar novo funcionário" className="flex-1 md:flex-none shadow-brand-500/20">
+                        <PlusIcon /> <span className="ml-2">Novo</span>
+                    </Button>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
+                {/* Mobile Card View for Users */}
+                <div className="block sm:hidden divide-y divide-slate-100">
+                    {users.map(u => (
+                        <div key={u.id} onClick={() => setSelectedUserForView(u)} className="p-4 active:bg-slate-50">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="font-bold text-slate-800 text-lg">{u.name}</div>
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                    {u.role === Role.ADMIN ? 'Admin' : 'Func'}
+                                </span>
+                            </div>
+                            <div className="text-sm text-slate-600 mb-1">{u.position}</div>
+                            <div className="text-xs text-slate-400 mb-4">{u.email}</div>
+                            
+                            <div className="flex justify-end gap-3">
+                                <button onClick={(e) => handleGeneratePDF(e, u)} className="text-sm font-medium text-brand-600 flex items-center bg-brand-50 px-3 py-1.5 rounded-lg" title="Gerar PDF">
+                                    <PdfIcon /> <span className="ml-1">Relatório</span>
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }} className="text-sm font-medium text-red-600 flex items-center bg-red-50 px-3 py-1.5 rounded-lg" title="Excluir">
+                                    <TrashIcon />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <table className="hidden sm:table w-full text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                        <tr>
+                            <th className="p-5 pl-8">Nome</th>
+                            <th className="p-5">Email</th>
+                            <th className="p-5">Cargo</th>
+                            <th className="p-5">Acesso</th>
+                            <th className="p-5 text-right pr-8">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {users.map(u => (
+                            <tr key={u.id} className="hover:bg-slate-50 cursor-pointer transition-colors group" onClick={() => setSelectedUserForView(u)}>
+                                <td className="p-5 pl-8 font-medium text-slate-800 flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-600' : 'bg-brand-100 text-brand-600'}`}>
+                                        {u.name.charAt(0)}
+                                    </div>
+                                    {u.name}
+                                </td>
+                                <td className="p-5 text-slate-600">{u.email}</td>
+                                <td className="p-5 text-slate-600">{u.position}</td>
+                                <td className="p-5">
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                        {u.role === Role.ADMIN ? 'Admin' : 'Colaborador'}
+                                    </span>
+                                </td>
+                                <td className="p-5 text-right pr-8" onClick={e => e.stopPropagation()}>
+                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={(e) => handleGeneratePDF(e, u)} className="text-slate-400 hover:text-brand-600 p-2 hover:bg-brand-50 rounded-lg transition-colors" title="Gerar Relatório PDF">
+                                            <PdfIcon />
+                                        </button>
+                                        <button onClick={() => handleDelete(u.id)} className="text-slate-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Funcionário">
+                                            <TrashIcon />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Cadastrar Novo Talento">
+                <div className="space-y-4">
+                    <input 
+                        type="text" placeholder="Nome Completo" 
+                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        value={newUser.name || ''} onChange={e => setNewUser({...newUser, name: e.target.value})} 
+                    />
+                    <input 
+                        type="email" placeholder="Email Corporativo" 
+                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        value={newUser.email || ''} onChange={e => setNewUser({...newUser, email: e.target.value})} 
+                    />
+                    <input 
+                        type="password" placeholder="Senha Inicial" 
+                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        value={newUser.password || ''} onChange={e => setNewUser({...newUser, password: e.target.value})} 
+                    />
+                    <input 
+                        type="text" placeholder="Cargo / Função" 
+                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        value={newUser.position || ''} onChange={e => setNewUser({...newUser, position: e.target.value})} 
+                    />
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Nível de Acesso</label>
+                        <select 
+                            className="w-full border border-slate-200 rounded-xl p-3 bg-white focus:ring-brand-500 focus:border-brand-500 outline-none"
+                            value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value as Role})}
+                        >
+                            <option value={Role.EMPLOYEE}>Colaborador</option>
+                            <option value={Role.ADMIN}>Administrador</option>
+                        </select>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-2">
+                        <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleAddUser}>Cadastrar</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Settings Modal */}
+            <Modal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} title="Parâmetros da Clínica">
+                <div className="space-y-6">
+                    <p className="text-sm text-slate-500">Defina os horários de funcionamento do Espaço Hidro para a análise automática.</p>
+                    
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase">Entrada Padrão</label>
+                            <input 
+                                type="time" 
+                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                value={settings.workStart}
+                                onChange={e => setSettingsState({...settings, workStart: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase">Saída Padrão</label>
+                            <input 
+                                type="time" 
+                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                value={settings.workEnd}
+                                onChange={e => setSettingsState({...settings, workEnd: e.target.value})}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase">Início Almoço</label>
+                            <input 
+                                type="time" 
+                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                value={settings.lunchStart}
+                                onChange={e => setSettingsState({...settings, lunchStart: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase">Fim Almoço</label>
+                            <input 
+                                type="time" 
+                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                value={settings.lunchEnd}
+                                onChange={e => setSettingsState({...settings, lunchEnd: e.target.value})}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100">
+                        <Button variant="ghost" onClick={() => setIsSettingsModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleSaveSettings}>Salvar Parâmetros</Button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    );
+}
+
+const NotificationCenter: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen, onClose }) => {
+    const [notifications, setNotifications] = useState<EmailNotification[]>([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            setNotifications(getNotifications());
+        }
+    }, [isOpen]);
+
+    const handleClear = () => {
+        clearNotifications();
+        setNotifications([]);
+    }
+
+    if (!isOpen) return null;
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Caixa de Mensagens">
+            <div className="flex justify-between items-center mb-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Recentes</p>
+                {notifications.length > 0 && (
+                    <button onClick={handleClear} className="text-xs text-red-500 hover:text-red-700 font-medium" title="Limpar todas">Limpar Tudo</button>
+                )}
+            </div>
+            <div className="max-h-[400px] overflow-y-auto space-y-3 custom-scrollbar -mr-2 pr-2">
+                {notifications.length === 0 ? (
+                    <div className="text-center py-10 text-slate-300 flex flex-col items-center">
+                        <MailIcon />
+                        <span className="mt-2 text-sm">Nenhuma mensagem.</span>
+                    </div>
+                ) : (
+                    notifications.map(n => (
+                        <div key={n.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100 relative group hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-slate-800 break-words w-3/4 text-sm">{n.subject}</span>
+                                <span className="text-[10px] text-slate-400 whitespace-nowrap bg-white px-2 py-1 rounded border border-slate-100">
+                                    {new Date(n.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                            </div>
+                            <div className="text-xs text-brand-600 mb-2 font-medium">Para: {n.to}</div>
+                            <p className="text-slate-600 text-sm leading-relaxed">{n.body}</p>
+                        </div>
+                    ))
+                )}
+            </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                <Button onClick={onClose} variant="secondary">Fechar</Button>
+            </div>
+        </Modal>
+    )
+}
+
+// --- MAIN APP ---
+
+const App: React.FC = () => {
+  const [authState, setAuthState] = useState<AuthState>({ user: null, isAuthenticated: false });
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    initStorage();
+    // Update notification badge periodically
+    const interval = setInterval(() => {
+        setNotificationCount(getNotifications().length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogin = (user: User) => {
+    setAuthState({ user, isAuthenticated: true });
+  };
+
+  const handleLogout = () => {
+    setAuthState({ user: null, isAuthenticated: false });
+  };
+
+  if (!authState.isAuthenticated || !authState.user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 flex flex-col">
+      {/* Navbar */}
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-20">
+            <div className="flex items-center">
+              {/* LOGO IN NAVBAR */}
+              <div className="flex-shrink-0 flex items-center gap-3">
+                 <img 
+                    src={COMPANY_LOGO} 
+                    alt="Espaço Hidro" 
+                    className="h-10 w-auto object-contain"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                 />
+                 <div className="hidden sm:flex flex-col">
+                    <span className="text-brand-900 font-bold text-lg leading-tight tracking-tight">PontoCerto</span>
+                    <span className="text-teal-600 text-xs font-medium tracking-wide">CLÍNICA DE FISIOTERAPIA</span>
+                 </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 sm:space-x-6">
+               {/* Notification Bell */}
+              <button 
+                onClick={() => setIsNotificationsOpen(true)}
+                className="relative p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                title="Notificações"
+              >
+                <BellIcon />
+                {notificationCount > 0 && (
+                    <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
+                )}
+              </button>
+
+              <div className="h-8 w-[1px] bg-slate-200 hidden sm:block"></div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end hidden sm:flex">
+                    <span className="text-sm font-bold text-slate-800">{authState.user.name}</span>
+                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{authState.user.role === Role.ADMIN ? 'Administrador' : authState.user.position}</span>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-500 to-teal-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                    <UserIcon />
+                </div>
+              </div>
+
+              <button 
+                onClick={handleLogout}
+                className="p-2.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2"
+                title="Sair"
+              >
+                <LogOutIcon />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {authState.user.role === Role.ADMIN ? (
+             <div className="space-y-10">
+                <AdminDashboard />
+             </div>
+        ) : (
+            <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} />
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 mt-auto">
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-slate-400 font-medium">
+            &copy; 2024 PontoCerto • Sistema Interno
+          </p>
+          <p className="text-xs text-slate-300">
+             Desenvolvido para Espaço Hidro
+          </p>
+        </div>
+      </footer>
+
+      <NotificationCenter isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+    </div>
+  );
+};
+
+export default App;

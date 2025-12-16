@@ -1,0 +1,5 @@
+{
+  "name": "PontoCerto - Sistema de Ponto",
+  "description": "Sistema completo de registro de ponto eletrônico com gestão de funcionários, relatórios mensais e insights via IA.",
+  "requestFramePermissions": []
+}
