@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "manifest_version": 3,
   "description": "Sistema completo de registro de ponto eletrônico com gestão de funcionários.",
-  "offline_enabled": true,
   "permissions": [
     "storage",
     "notifications",
@@ -32,6 +31,5 @@
     "16": "logo192.png",
     "48": "logo192.png",
     "128": "logo192.png"
-  },
-  "requestFramePermissions": []
+  }
 }
