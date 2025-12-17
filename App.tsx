@@ -26,6 +26,7 @@ const PdfIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height=
 const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
 const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
 const SunIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>;
+const MoonIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>;
 const CoffeeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>;
 
 // --- HELPER COMPONENTS ---
@@ -54,11 +55,11 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
           <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-teal-500/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-4xl w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10">
+      <div className="max-w-4xl w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10 transition-colors duration-300">
         
         {/* Left Side: Brand Area */}
-        <div className="md:w-1/2 bg-slate-50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 relative">
-            <div className="mb-8 p-6 bg-white rounded-full shadow-lg">
+        <div className="md:w-1/2 bg-slate-50 dark:bg-slate-800/50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 relative">
+            <div className="mb-8 p-6 bg-white dark:bg-slate-700 rounded-full shadow-lg">
                 <img 
                     src={COMPANY_LOGO} 
                     alt="Espaço Hidro" 
@@ -66,33 +67,33 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
             </div>
-            <h1 className="text-3xl font-extrabold text-brand-900 mb-2">PontoCerto</h1>
-            <p className="text-slate-500 text-center text-sm px-8">Sistema inteligente de gestão de ponto e produtividade.</p>
+            <h1 className="text-3xl font-extrabold text-brand-900 dark:text-brand-400 mb-2">PontoCerto</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm px-8">Sistema inteligente de gestão de ponto e produtividade.</p>
         </div>
 
         {/* Right Side: Form */}
         <div className="md:w-1/2 p-8 md:p-12">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center md:text-left">Bem-vindo de volta</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center md:text-left">Bem-vindo de volta</h2>
             
             <form className="space-y-5" onSubmit={handleSubmit}>
-            {error && <div className="text-red-600 bg-red-50 text-sm p-3 rounded-lg border border-red-100 flex items-center justify-center">{error}</div>}
+            {error && <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 text-sm p-3 rounded-lg border border-red-100 dark:border-red-900/50 flex items-center justify-center">{error}</div>}
             <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Email Corporativo</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Email Corporativo</label>
                 <input 
                 type="email" 
                 required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800 dark:text-slate-100"
                 placeholder="seunome@empresa.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 />
             </div>
             <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Senha</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Senha</label>
                 <input 
                 type="password" 
                 required 
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800 dark:text-slate-100"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -102,7 +103,7 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
             </form>
             
             <div className="mt-6 text-center">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-400 dark:text-slate-500">
                 Demo: admin@empresa.com / admin
                 </p>
             </div>
@@ -114,10 +115,10 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
 
 const LogBadge: React.FC<{ type: LogType }> = ({ type }) => {
   const styles = {
-    [LogType.ENTRY]: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    [LogType.LUNCH_START]: "bg-amber-100 text-amber-800 border-amber-200",
-    [LogType.LUNCH_END]: "bg-indigo-100 text-indigo-800 border-indigo-200",
-    [LogType.EXIT]: "bg-rose-100 text-rose-800 border-rose-200",
+    [LogType.ENTRY]: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
+    [LogType.LUNCH_START]: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+    [LogType.LUNCH_END]: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+    [LogType.EXIT]: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800",
   };
   const icons = {
     [LogType.ENTRY]: "→",
@@ -168,7 +169,7 @@ const getTimeDeviation = (log: TimeLog, settings: CompanySettings) => {
 
 // --- DASHBOARDS ---
 
-const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ user, currentUserRole }) => {
+const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: boolean }> = ({ user, currentUserRole, isDark }) => {
   const [logs, setLogs] = useState<TimeLog[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -379,22 +380,22 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
         <div className="lg:col-span-2 space-y-6">
             
             {/* Filter Section */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <div className="flex items-center text-slate-700 font-bold mb-4">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="flex items-center text-slate-700 dark:text-slate-200 font-bold mb-4">
                     <FilterIcon /> <span className="ml-2">Filtrar Registros</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-xs text-slate-400 font-semibold uppercase mb-1">De</label>
-                        <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                        <label className="block text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase mb-1">De</label>
+                        <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none dark:text-slate-200" />
                     </div>
                     <div>
-                        <label className="block text-xs text-slate-400 font-semibold uppercase mb-1">Até</label>
-                        <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                        <label className="block text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase mb-1">Até</label>
+                        <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none dark:text-slate-200" />
                     </div>
                     <div>
-                        <label className="block text-xs text-slate-400 font-semibold uppercase mb-1">Tipo</label>
-                        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none">
+                        <label className="block text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase mb-1">Tipo</label>
+                        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg p-2.5 text-sm focus:ring-brand-500 focus:border-brand-500 outline-none dark:text-slate-200">
                             <option value="ALL">Todos</option>
                             <option value={LogType.ENTRY}>Entrada</option>
                             <option value={LogType.LUNCH_START}>Sair Almoço</option>
@@ -408,39 +409,39 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
-                    <h3 className="text-xl font-bold text-slate-800">Histórico ({filteredLogs.length})</h3>
-                    <Button variant="outline" onClick={handleAnalysis} isLoading={analyzing} className="text-sm w-full sm:w-auto hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200" title="Gerar análise com IA">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">Histórico ({filteredLogs.length})</h3>
+                    <Button variant="outline" onClick={handleAnalysis} isLoading={analyzing} className="text-sm w-full sm:w-auto hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 dark:hover:bg-slate-700 dark:hover:text-brand-400" title="Gerar análise com IA">
                     <SparklesIcon /> <span className="ml-2">Analisar com IA</span>
                     </Button>
                 </div>
             
             {/* Mobile Card View */}
-            <div className="block sm:hidden divide-y divide-slate-100">
+            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
                 {filteredLogs.length === 0 ? (
                     <div className="text-center text-slate-400 py-10">Nenhum registro encontrado.</div>
                 ) : filteredLogs.map(log => {
                     const deviation = getTimeDeviation(log, settings);
                     return (
-                        <div key={log.id} className="p-4 bg-white flex justify-between items-center relative">
+                        <div key={log.id} className="p-4 bg-white dark:bg-slate-800 flex justify-between items-center relative">
                             {deviation && (
                                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${deviation.status === 'late' || deviation.status === 'early' ? 'bg-red-500' : ''}`}></div>
                             )}
                             <div className="flex-1">
-                                <div className="font-semibold text-slate-800 flex items-center">
+                                <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center">
                                     {new Date(log.timestamp).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}
-                                    <span className="mx-2 text-slate-300">|</span>
-                                    <span className="font-mono text-slate-600">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                    <span className="mx-2 text-slate-300 dark:text-slate-600">|</span>
+                                    <span className="font-mono text-slate-600 dark:text-slate-400">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
                                 </div>
                                 <div className="mt-2 flex items-center flex-wrap gap-2">
                                     <LogBadge type={log.type} />
                                     {deviation && (
-                                        <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold border border-red-100">
+                                        <span className="text-[10px] bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold border border-red-100 dark:border-red-900/30">
                                             {deviation.label}
                                         </span>
                                     )}
-                                    {log.edited && <span className="text-[10px] text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">Editado</span>}
+                                    {log.edited && <span className="text-[10px] text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30">Editado</span>}
                                 </div>
                             </div>
                             <button onClick={() => handleEdit(log)} className="p-2 ml-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors" title="Corrigir Registro">
@@ -453,8 +454,8 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
 
             {/* Desktop Table View */}
             <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
                     <tr>
                     <th className="p-4 rounded-tl-lg">Data</th>
                     <th className="p-4">Hora</th>
@@ -463,19 +464,19 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
                     <th className="p-4 text-right rounded-tr-lg">Ações</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                     {filteredLogs.length === 0 ? (
                         <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhum registro encontrado.</td></tr>
                     ) : filteredLogs.map(log => {
                         const deviation = getTimeDeviation(log, settings);
                         return (
-                        <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
-                            <td className="p-4 font-medium text-slate-800">{new Date(log.timestamp).toLocaleDateString('pt-BR')}</td>
+                        <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
+                            <td className="p-4 font-medium text-slate-800 dark:text-slate-200">{new Date(log.timestamp).toLocaleDateString('pt-BR')}</td>
                             <td className="p-4">
                                 <div className="flex items-center gap-2">
-                                    <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
+                                    <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
                                     {deviation && (
-                                        <span className="text-xs text-red-500 font-bold bg-red-50 px-1.5 py-0.5 rounded-full">
+                                        <span className="text-xs text-red-500 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">
                                             {deviation.label}
                                         </span>
                                     )}
@@ -483,7 +484,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
                             </td>
                             <td className="p-4"><LogBadge type={log.type} /></td>
                             <td className="p-4">
-                                {log.edited ? <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium border border-amber-100">Corrigido</span> : <span className="text-xs text-slate-400">-</span>}
+                                {log.edited ? <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full font-medium border border-amber-100 dark:border-amber-900/30">Corrigido</span> : <span className="text-xs text-slate-400">-</span>}
                             </td>
                             <td className="p-4 text-right">
                             <button onClick={() => handleEdit(log)} className="text-slate-400 hover:text-brand-600 p-2 hover:bg-brand-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Corrigir Registro">
@@ -501,17 +502,23 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
 
         {/* Stats & Report */}
         <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex flex-col h-[400px]">
-                <h3 className="text-lg font-bold text-slate-800 mb-6">Atividade Recente</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6 border border-slate-100 dark:border-slate-700 flex flex-col h-[400px]">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Atividade Recente</h3>
                 <div className="flex-1 w-full -ml-4">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={12} stroke="#94a3b8" />
-                            <YAxis axisLine={false} tickLine={false} fontSize={12} allowDecimals={false} stroke="#94a3b8" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#334155" : "#f1f5f9"} />
+                            <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={12} stroke={isDark ? "#94a3b8" : "#94a3b8"} />
+                            <YAxis axisLine={false} tickLine={false} fontSize={12} allowDecimals={false} stroke={isDark ? "#94a3b8" : "#94a3b8"} />
                             <Tooltip 
-                                cursor={{fill: '#f8fafc'}} 
-                                contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                cursor={{fill: isDark ? '#1e293b' : '#f8fafc'}} 
+                                contentStyle={{
+                                    borderRadius: '12px', 
+                                    border: 'none', 
+                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                    backgroundColor: isDark ? '#1e293b' : '#fff',
+                                    color: isDark ? '#fff' : '#000'
+                                }}
                             />
                             <Bar dataKey="registros" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={40} />
                         </BarChart>
@@ -520,12 +527,12 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
             </div>
 
             {analysis && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm p-6 border border-indigo-100">
-                    <h3 className="text-indigo-900 font-bold mb-4 flex items-center text-lg">
-                        <div className="p-1.5 bg-indigo-100 rounded-lg mr-2 text-indigo-600"><SparklesIcon /></div>
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl shadow-sm p-6 border border-indigo-100 dark:border-indigo-800/30">
+                    <h3 className="text-indigo-900 dark:text-indigo-200 font-bold mb-4 flex items-center text-lg">
+                        <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg mr-2 text-indigo-600 dark:text-indigo-300"><SparklesIcon /></div>
                         Insights IA
                     </h3>
-                    <div className="prose prose-sm prose-indigo max-h-80 overflow-y-auto custom-scrollbar">
+                    <div className="prose prose-sm prose-indigo dark:prose-invert max-h-80 overflow-y-auto custom-scrollbar">
                         <ReactMarkdown>{analysis}</ReactMarkdown>
                     </div>
                 </div>
@@ -536,7 +543,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
       {/* Edit Modal */}
       <Modal isOpen={!!isEditing} onClose={() => setIsEditing(null)} title={currentUserRole === Role.ADMIN ? "Aprovar/Corrigir Registro" : "Solicitar Correção"}>
         <div className="space-y-5">
-            <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                 {currentUserRole === Role.ADMIN 
                     ? "Ao salvar, um email de notificação será enviado ao funcionário informando a correção."
                     : "Ao salvar, um email será enviado ao seu gestor solicitando a correção deste registro."
@@ -544,15 +551,15 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
             </p>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nova Data</label>
-                    <input type="date" className="w-full border border-slate-200 rounded-xl p-3 text-slate-700 focus:ring-brand-500 focus:border-brand-500 outline-none" value={editDate} onChange={e => setEditDate(e.target.value)} />
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Nova Data</label>
+                    <input type="date" className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-200 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800" value={editDate} onChange={e => setEditDate(e.target.value)} />
                 </div>
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Novo Horário</label>
-                    <input type="time" className="w-full border border-slate-200 rounded-xl p-3 text-slate-700 focus:ring-brand-500 focus:border-brand-500 outline-none" value={editTime} onChange={e => setEditTime(e.target.value)} />
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Novo Horário</label>
+                    <input type="time" className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-200 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800" value={editTime} onChange={e => setEditTime(e.target.value)} />
                 </div>
             </div>
-            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-slate-100">
+            <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
                 <Button variant="ghost" onClick={() => setIsEditing(null)}>Cancelar</Button>
                 <Button onClick={saveEdit}>
                     {currentUserRole === Role.ADMIN ? "Confirmar Ajuste" : "Enviar Solicitação"}
@@ -564,7 +571,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role }> = ({ us
   );
 };
 
-const AdminDashboard: React.FC = () => {
+const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -628,26 +635,26 @@ const AdminDashboard: React.FC = () => {
                 <Button variant="outline" className="mb-6" onClick={() => setSelectedUserForView(null)} title="Voltar para a lista de funcionários">
                     &larr; Voltar para Lista
                 </Button>
-                <div className="mb-8 p-6 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-                     <div className="h-16 w-16 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-2xl font-bold">
+                <div className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                     <div className="h-16 w-16 bg-brand-100 dark:bg-brand-900/50 rounded-full flex items-center justify-center text-brand-600 dark:text-brand-400 text-2xl font-bold">
                         {selectedUserForView.name.charAt(0)}
                      </div>
                      <div>
-                        <h2 className="text-2xl font-bold text-slate-800">{selectedUserForView.name}</h2>
-                        <p className="text-slate-500">{selectedUserForView.position} • {selectedUserForView.email}</p>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{selectedUserForView.name}</h2>
+                        <p className="text-slate-500 dark:text-slate-400">{selectedUserForView.position} • {selectedUserForView.email}</p>
                      </div>
                 </div>
-                <EmployeeDashboard user={selectedUserForView} currentUserRole={Role.ADMIN} />
+                <EmployeeDashboard user={selectedUserForView} currentUserRole={Role.ADMIN} isDark={isDark} />
             </div>
         );
     }
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Equipe</h2>
-                    <p className="text-slate-500 mt-1">Gerencie os colaboradores do Espaço Hidro.</p>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Equipe</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Gerencie os colaboradores do Espaço Hidro.</p>
                 </div>
                 <div className="flex space-x-3 w-full md:w-auto">
                     <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)} title="Configurações da Empresa" className="flex-1 md:flex-none">
@@ -659,25 +666,25 @@ const AdminDashboard: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700">
                 {/* Mobile Card View for Users */}
-                <div className="block sm:hidden divide-y divide-slate-100">
+                <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
                     {users.map(u => (
-                        <div key={u.id} onClick={() => setSelectedUserForView(u)} className="p-4 active:bg-slate-50">
+                        <div key={u.id} onClick={() => setSelectedUserForView(u)} className="p-4 active:bg-slate-50 dark:active:bg-slate-700">
                             <div className="flex justify-between items-start mb-2">
-                                <div className="font-bold text-slate-800 text-lg">{u.name}</div>
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                <div className="font-bold text-slate-800 dark:text-white text-lg">{u.name}</div>
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
                                     {u.role === Role.ADMIN ? 'Admin' : 'Func'}
                                 </span>
                             </div>
-                            <div className="text-sm text-slate-600 mb-1">{u.position}</div>
-                            <div className="text-xs text-slate-400 mb-4">{u.email}</div>
+                            <div className="text-sm text-slate-600 dark:text-slate-300 mb-1">{u.position}</div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500 mb-4">{u.email}</div>
                             
                             <div className="flex justify-end gap-3">
-                                <button onClick={(e) => handleGeneratePDF(e, u)} className="text-sm font-medium text-brand-600 flex items-center bg-brand-50 px-3 py-1.5 rounded-lg" title="Gerar PDF">
+                                <button onClick={(e) => handleGeneratePDF(e, u)} className="text-sm font-medium text-brand-600 dark:text-brand-400 flex items-center bg-brand-50 dark:bg-brand-900/20 px-3 py-1.5 rounded-lg" title="Gerar PDF">
                                     <PdfIcon /> <span className="ml-1">Relatório</span>
                                 </button>
-                                <button onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }} className="text-sm font-medium text-red-600 flex items-center bg-red-50 px-3 py-1.5 rounded-lg" title="Excluir">
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }} className="text-sm font-medium text-red-600 dark:text-red-400 flex items-center bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg" title="Excluir">
                                     <TrashIcon />
                                 </button>
                             </div>
@@ -687,7 +694,7 @@ const AdminDashboard: React.FC = () => {
 
                 {/* Desktop Table View */}
                 <table className="hidden sm:table w-full text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                    <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
                         <tr>
                             <th className="p-5 pl-8">Nome</th>
                             <th className="p-5">Email</th>
@@ -696,28 +703,28 @@ const AdminDashboard: React.FC = () => {
                             <th className="p-5 text-right pr-8">Ações</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                         {users.map(u => (
-                            <tr key={u.id} className="hover:bg-slate-50 cursor-pointer transition-colors group" onClick={() => setSelectedUserForView(u)}>
-                                <td className="p-5 pl-8 font-medium text-slate-800 flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-600' : 'bg-brand-100 text-brand-600'}`}>
+                            <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group" onClick={() => setSelectedUserForView(u)}>
+                                <td className="p-5 pl-8 font-medium text-slate-800 dark:text-slate-200 flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300'}`}>
                                         {u.name.charAt(0)}
                                     </div>
                                     {u.name}
                                 </td>
-                                <td className="p-5 text-slate-600">{u.email}</td>
-                                <td className="p-5 text-slate-600">{u.position}</td>
+                                <td className="p-5 text-slate-600 dark:text-slate-400">{u.email}</td>
+                                <td className="p-5 text-slate-600 dark:text-slate-400">{u.position}</td>
                                 <td className="p-5">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${u.role === Role.ADMIN ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
                                         {u.role === Role.ADMIN ? 'Admin' : 'Colaborador'}
                                     </span>
                                 </td>
                                 <td className="p-5 text-right pr-8" onClick={e => e.stopPropagation()}>
                                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => handleGeneratePDF(e, u)} className="text-slate-400 hover:text-brand-600 p-2 hover:bg-brand-50 rounded-lg transition-colors" title="Gerar Relatório PDF">
+                                        <button onClick={(e) => handleGeneratePDF(e, u)} className="text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 p-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors" title="Gerar Relatório PDF">
                                             <PdfIcon />
                                         </button>
-                                        <button onClick={() => handleDelete(u.id)} className="text-slate-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Funcionário">
+                                        <button onClick={() => handleDelete(u.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir Funcionário">
                                             <TrashIcon />
                                         </button>
                                     </div>
@@ -732,28 +739,28 @@ const AdminDashboard: React.FC = () => {
                 <div className="space-y-4">
                     <input 
                         type="text" placeholder="Nome Completo" 
-                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white" 
                         value={newUser.name || ''} onChange={e => setNewUser({...newUser, name: e.target.value})} 
                     />
                     <input 
                         type="email" placeholder="Email Corporativo" 
-                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white" 
                         value={newUser.email || ''} onChange={e => setNewUser({...newUser, email: e.target.value})} 
                     />
                     <input 
                         type="password" placeholder="Senha Inicial" 
-                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white" 
                         value={newUser.password || ''} onChange={e => setNewUser({...newUser, password: e.target.value})} 
                     />
                     <input 
                         type="text" placeholder="Cargo / Função" 
-                        className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                        className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white" 
                         value={newUser.position || ''} onChange={e => setNewUser({...newUser, position: e.target.value})} 
                     />
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Nível de Acesso</label>
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 ml-1">Nível de Acesso</label>
                         <select 
-                            className="w-full border border-slate-200 rounded-xl p-3 bg-white focus:ring-brand-500 focus:border-brand-500 outline-none"
+                            className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-white dark:bg-slate-800 dark:text-white focus:ring-brand-500 focus:border-brand-500 outline-none"
                             value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value as Role})}
                         >
                             <option value={Role.EMPLOYEE}>Colaborador</option>
@@ -761,7 +768,7 @@ const AdminDashboard: React.FC = () => {
                         </select>
                     </div>
 
-                    <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 mt-2">
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-700 mt-2">
                         <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>Cancelar</Button>
                         <Button onClick={handleAddUser}>Cadastrar</Button>
                     </div>
@@ -771,23 +778,23 @@ const AdminDashboard: React.FC = () => {
             {/* Settings Modal */}
             <Modal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} title="Parâmetros da Clínica">
                 <div className="space-y-6">
-                    <p className="text-sm text-slate-500">Defina os horários de funcionamento do Espaço Hidro para a análise automática.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Defina os horários de funcionamento do Espaço Hidro para a análise automática.</p>
                     
                     <div className="grid grid-cols-2 gap-5">
                         <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 uppercase">Entrada Padrão</label>
+                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Entrada Padrão</label>
                             <input 
                                 type="time" 
-                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
                                 value={settings.workStart}
                                 onChange={e => setSettingsState({...settings, workStart: e.target.value})}
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 uppercase">Saída Padrão</label>
+                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Saída Padrão</label>
                             <input 
                                 type="time" 
-                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
                                 value={settings.workEnd}
                                 onChange={e => setSettingsState({...settings, workEnd: e.target.value})}
                             />
@@ -796,26 +803,26 @@ const AdminDashboard: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-5">
                         <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 uppercase">Início Almoço</label>
+                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Início Almoço</label>
                             <input 
                                 type="time" 
-                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
                                 value={settings.lunchStart}
                                 onChange={e => setSettingsState({...settings, lunchStart: e.target.value})}
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 uppercase">Fim Almoço</label>
+                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Fim Almoço</label>
                             <input 
                                 type="time" 
-                                className="w-full border border-slate-200 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
                                 value={settings.lunchEnd}
                                 onChange={e => setSettingsState({...settings, lunchEnd: e.target.value})}
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100">
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100 dark:border-slate-700">
                         <Button variant="ghost" onClick={() => setIsSettingsModalOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSaveSettings}>Salvar Parâmetros</Button>
                     </div>
@@ -844,33 +851,33 @@ const NotificationCenter: React.FC<{ isOpen: boolean, onClose: () => void }> = (
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Caixa de Mensagens">
             <div className="flex justify-between items-center mb-4">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Recentes</p>
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Recentes</p>
                 {notifications.length > 0 && (
                     <button onClick={handleClear} className="text-xs text-red-500 hover:text-red-700 font-medium" title="Limpar todas">Limpar Tudo</button>
                 )}
             </div>
             <div className="max-h-[400px] overflow-y-auto space-y-3 custom-scrollbar -mr-2 pr-2">
                 {notifications.length === 0 ? (
-                    <div className="text-center py-10 text-slate-300 flex flex-col items-center">
+                    <div className="text-center py-10 text-slate-300 dark:text-slate-600 flex flex-col items-center">
                         <MailIcon />
                         <span className="mt-2 text-sm">Nenhuma mensagem.</span>
                     </div>
                 ) : (
                     notifications.map(n => (
-                        <div key={n.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100 relative group hover:shadow-md transition-shadow">
+                        <div key={n.id} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 relative group hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start mb-1">
-                                <span className="font-bold text-slate-800 break-words w-3/4 text-sm">{n.subject}</span>
-                                <span className="text-[10px] text-slate-400 whitespace-nowrap bg-white px-2 py-1 rounded border border-slate-100">
+                                <span className="font-bold text-slate-800 dark:text-slate-200 break-words w-3/4 text-sm">{n.subject}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-400 whitespace-nowrap bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">
                                     {new Date(n.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </span>
                             </div>
-                            <div className="text-xs text-brand-600 mb-2 font-medium">Para: {n.to}</div>
-                            <p className="text-slate-600 text-sm leading-relaxed">{n.body}</p>
+                            <div className="text-xs text-brand-600 dark:text-brand-400 mb-2 font-medium">Para: {n.to}</div>
+                            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{n.body}</p>
                         </div>
                     ))
                 )}
             </div>
-            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
                 <Button onClick={onClose} variant="secondary">Fechar</Button>
             </div>
         </Modal>
@@ -883,15 +890,37 @@ const App: React.FC = () => {
   const [authState, setAuthState] = useState<AuthState>({ user: null, isAuthenticated: false });
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  
+  // Theme State
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('theme') || 'light';
+    }
+    return 'light';
+  });
 
   useEffect(() => {
     initStorage();
-    // Update notification badge periodically
     const interval = setInterval(() => {
         setNotificationCount(getNotifications().length);
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  // Theme Effect
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+        root.classList.add('dark');
+    } else {
+        root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   const handleLogin = (user: User) => {
     setAuthState({ user, isAuthenticated: true });
@@ -906,9 +935,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 flex flex-col transition-colors duration-300">
       {/* Navbar */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20">
             <div className="flex items-center">
@@ -921,30 +950,40 @@ const App: React.FC = () => {
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                  />
                  <div className="hidden sm:flex flex-col">
-                    <span className="text-brand-900 font-bold text-lg leading-tight tracking-tight">PontoCerto</span>
-                    <span className="text-teal-600 text-xs font-medium tracking-wide">CLÍNICA DE FISIOTERAPIA</span>
+                    <span className="text-brand-900 dark:text-brand-400 font-bold text-lg leading-tight tracking-tight">PontoCerto</span>
+                    <span className="text-teal-600 dark:text-teal-400 text-xs font-medium tracking-wide">CLÍNICA DE FISIOTERAPIA</span>
                  </div>
               </div>
             </div>
             <div className="flex items-center space-x-3 sm:space-x-6">
+               
+               {/* Theme Toggle */}
+               <button
+                 onClick={toggleTheme}
+                 className="p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition-colors"
+                 title={theme === 'light' ? "Mudar para Modo Escuro" : "Mudar para Modo Claro"}
+               >
+                 {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+               </button>
+
                {/* Notification Bell */}
               <button 
                 onClick={() => setIsNotificationsOpen(true)}
-                className="relative p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                className="relative p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition-colors"
                 title="Notificações"
               >
                 <BellIcon />
                 {notificationCount > 0 && (
-                    <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
+                    <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-slate-900"></span>
                 )}
               </button>
 
-              <div className="h-8 w-[1px] bg-slate-200 hidden sm:block"></div>
+              <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
 
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-end hidden sm:flex">
-                    <span className="text-sm font-bold text-slate-800">{authState.user.name}</span>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{authState.user.role === Role.ADMIN ? 'Administrador' : authState.user.position}</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{authState.user.name}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{authState.user.role === Role.ADMIN ? 'Administrador' : authState.user.position}</span>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-500 to-teal-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
                     <UserIcon />
@@ -953,7 +992,7 @@ const App: React.FC = () => {
 
               <button 
                 onClick={handleLogout}
-                className="p-2.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-2"
+                className="p-2.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-colors ml-2"
                 title="Sair"
               >
                 <LogOutIcon />
@@ -964,23 +1003,23 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-colors duration-300">
         {authState.user.role === Role.ADMIN ? (
              <div className="space-y-10">
-                <AdminDashboard />
+                <AdminDashboard isDark={theme === 'dark'} />
              </div>
         ) : (
-            <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} />
+            <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} isDark={theme === 'dark'} />
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-auto">
+      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-auto transition-colors duration-300">
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-slate-400 font-medium">
+          <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
             &copy; 2024 PontoCerto • Sistema Interno
           </p>
-          <p className="text-xs text-slate-300">
+          <p className="text-xs text-slate-300 dark:text-slate-600">
              Desenvolvido para Espaço Hidro
           </p>
         </div>

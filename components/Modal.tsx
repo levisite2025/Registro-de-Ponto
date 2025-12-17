@@ -21,10 +21,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100">
-          <div className="bg-white px-6 pt-6 pb-6">
-            <h3 className="text-xl leading-6 font-bold text-slate-800 mb-6">{title}</h3>
-            {children}
+        <div className="inline-block align-bottom bg-white dark:bg-slate-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 px-6 pt-6 pb-6">
+            <h3 className="text-xl leading-6 font-bold text-slate-800 dark:text-white mb-6">{title}</h3>
+            <div className="text-slate-700 dark:text-slate-300">
+              {children}
+            </div>
           </div>
         </div>
       </div>

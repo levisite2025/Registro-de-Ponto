@@ -16,10 +16,10 @@ export const Button: React.FC<ButtonProps> = ({
   
   const variants = {
     primary: "bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-700 hover:to-blue-700 shadow-blue-500/30 focus:ring-blue-500 border border-transparent",
-    secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-400",
-    danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 focus:ring-red-500",
-    outline: "bg-transparent border-2 border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-800 focus:ring-slate-400",
-    ghost: "bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700 shadow-none"
+    secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:border-slate-600",
+    danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/30",
+    outline: "bg-transparent border-2 border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-800 focus:ring-slate-400 dark:border-slate-600 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:border-slate-400",
+    ghost: "bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700 shadow-none dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
   };
 
   return (
