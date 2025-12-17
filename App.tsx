@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, createContext, useContext, useCallback } from 'react';
 import { AuthState, User, Role, TimeLog, LogType, CompanySettings, GeoLocation } from './types';
 import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings, generateId, getAllData, importData } from './services/storageService';
 import { generateMonthlyReportAnalysis } from './services/geminiService';
@@ -13,7 +13,7 @@ import ReactMarkdown from 'react-markdown';
 // --- CONFIGURAÇÃO DA LOGO ---
 const COMPANY_LOGO = "https://placehold.co/300x100/ffffff/004aad/png?text=Espaco+Hidro&font=roboto"; 
 
-// --- ICONS ---
+// --- ICONS (SVG) ---
 const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
 const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const LogOutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
@@ -33,29 +33,90 @@ const FileTextIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" he
 const MapPinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
 const UploadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
 const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+const AlertCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+const WifiOffIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>;
+const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+
+// --- TOAST CONTEXT ---
+interface ToastMessage {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
+const ToastContext = createContext<{ showToast: (msg: string, type?: 'success' | 'error' | 'info') => void }>({ showToast: () => {} });
+
+const useToast = () => useContext(ToastContext);
+
+const ToastContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  }, []);
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`pointer-events-auto flex items-center p-4 rounded-lg shadow-lg border animate-slide-in ${
+            toast.type === 'success' ? 'bg-white text-emerald-700 border-emerald-100 dark:bg-slate-800 dark:text-emerald-400 dark:border-emerald-900/50' :
+            toast.type === 'error' ? 'bg-white text-red-700 border-red-100 dark:bg-slate-800 dark:text-red-400 dark:border-red-900/50' :
+            'bg-white text-blue-700 border-blue-100 dark:bg-slate-800 dark:text-blue-400 dark:border-blue-900/50'
+          }`}>
+             <div className="mr-3">
+               {toast.type === 'success' ? <CheckIcon /> : toast.type === 'error' ? <AlertCircleIcon /> : <BellIcon />}
+             </div>
+             <div className="text-sm font-semibold">{toast.message}</div>
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+};
 
 // --- HELPER COMPONENTS ---
 
+const OfflineIndicator = () => {
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    if (isOnline) return null;
+
+    return (
+        <div className="bg-red-500 text-white text-xs font-bold text-center py-1 absolute top-0 w-full z-50 flex items-center justify-center gap-2">
+            <WifiOffIcon /> Modo Offline - Verifique sua conexão
+        </div>
+    );
+};
+
 const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
-  const [identifier, setIdentifier] = useState(''); // Pode ser Nome (Func) ou Email (Admin)
-  const [credential, setCredential] = useState(''); // Pode ser Código (Func) ou Senha (Admin)
-  const [error, setError] = useState('');
+  const [identifier, setIdentifier] = useState(''); 
+  const [credential, setCredential] = useState(''); 
+  const { showToast } = useToast();
   
-  // Clock State
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    // Clock Interval
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-
-    // Tenta identificar usuário via Chrome Identity
     getChromeIdentity().then(info => {
-      if (info && info.email) {
-        // Se detectarmos um email via Chrome, preenchemos automaticamente
-        setIdentifier(info.email);
-      }
+      if (info && info.email) setIdentifier(info.email);
     });
-
     return () => clearInterval(timer);
   }, []);
 
@@ -65,9 +126,7 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
     const inputId = identifier.trim();
     const inputCred = credential.trim();
     
-    // Lógica Híbrida de Login:
-    
-    // 1. Tentar Login como ADMIN (Email & Senha)
+    // 1. Admin
     const adminUser = users.find(u => 
         u.role === Role.ADMIN && 
         u.email.toLowerCase() === inputId.toLowerCase() &&
@@ -79,10 +138,9 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
         return;
     }
 
-    // 2. Tentar Login como FUNCIONÁRIO (Primeiro Nome & Código)
-    // Funcionários não usam email no login, apenas o primeiro nome e o código numérico
+    // 2. Employee
     const employeeUser = users.find(u => {
-        if (u.role === Role.ADMIN) return false; // Admins devem logar com email
+        if (u.role === Role.ADMIN) return false;
         const uFirstName = u.name.split(' ')[0].toLowerCase();
         return uFirstName === inputId.toLowerCase() && u.password === inputCred;
     });
@@ -92,20 +150,18 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
         return;
     }
 
-    setError('Credenciais inválidas. Verifique seus dados.');
+    showToast('Credenciais inválidas. Verifique seus dados.', 'error');
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-800 to-teal-800 p-4 relative overflow-hidden">
-      {/* Abstract Shapes */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-3xl"></div>
           <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-teal-500/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-4xl w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10 transition-colors duration-300">
+      <div className="max-w-4xl w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10 transition-colors duration-300 animate-fade-in">
         
-        {/* Left Side: Brand & Clock Area */}
         <div className="md:w-1/2 bg-slate-50 dark:bg-slate-800/50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 relative">
             <div className="mb-6 p-6 bg-white dark:bg-slate-700 rounded-full shadow-lg">
                 <img 
@@ -116,7 +172,6 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
                 />
             </div>
             
-            {/* Relógio Digital */}
             <div className="flex flex-col items-center mb-6">
                 <div className="text-5xl font-mono font-bold text-slate-700 dark:text-white tracking-widest drop-shadow-sm">
                     {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -130,12 +185,10 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
             <p className="text-slate-500 dark:text-slate-400 text-center text-sm px-8">Sistema inteligente de gestão de ponto.</p>
         </div>
 
-        {/* Right Side: Form */}
         <div className="md:w-1/2 p-8 md:p-12">
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center md:text-left">Identifique-se</h2>
             
             <form className="space-y-5" onSubmit={handleSubmit}>
-            {error && <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 text-sm p-3 rounded-lg border border-red-100 dark:border-red-900/50 flex items-center justify-center">{error}</div>}
             <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
                     Funcionário (Nome) / Admin (Email)
@@ -169,11 +222,6 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
                 <p className="text-xs text-slate-400 dark:text-slate-500">
                 Admin Padrão: admin@empresa.com / admin
                 </p>
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                        Desenvolvido por <span className="font-semibold text-brand-600 dark:text-brand-400">Levi Chagas Araujo</span>
-                    </p>
-                </div>
             </div>
         </div>
       </div>
@@ -240,6 +288,7 @@ const getTimeDeviation = (log: TimeLog, settings: CompanySettings) => {
 const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: boolean, onLogout?: () => void }> = ({ user, currentUserRole, isDark, onLogout }) => {
   const [logs, setLogs] = useState<TimeLog[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { showToast } = useToast();
   
   // Registration Modal State
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -268,10 +317,8 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
     return () => clearInterval(timer);
   }, [user.id]);
 
-  // Check for Reminder
   useEffect(() => {
     if (currentUserRole === Role.EMPLOYEE) {
-        // Check current logs for today
         const today = new Date().toLocaleDateString();
         const todaysLogs = logs.filter(l => new Date(l.timestamp).toLocaleDateString() === today);
         const hasEntry = todaysLogs.some(l => l.type === LogType.ENTRY);
@@ -283,7 +330,6 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
         const logDate = new Date(log.timestamp);
-        // Normalize time for date comparison
         const logDateStr = log.timestamp.split('T')[0];
         
         if (filterStartDate && logDateStr < filterStartDate) return false;
@@ -294,8 +340,6 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
     });
   }, [logs, filterStartDate, filterEndDate, filterType]);
 
-  // Verificação de segurança: Dia encerrado
-  // Bloqueia se o usuário já tem um registro de SAÍDA (EXIT) na data atual
   const isWorkDayFinished = useMemo(() => {
       const today = new Date().toLocaleDateString('pt-BR');
       return logs.some(l => 
@@ -316,13 +360,14 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
     setIsRegisterModalOpen(true);
   };
 
-  // Helper function to get location securely
+  // Improved Geolocation to not block execution
   const getLocation = (): Promise<GeoLocation | undefined> => {
       return new Promise((resolve) => {
           if (!navigator.geolocation) {
               resolve(undefined);
               return;
           }
+          // Timeout of 7 seconds for location
           navigator.geolocation.getCurrentPosition(
               (position) => {
                   resolve({
@@ -331,10 +376,10 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                   });
               },
               (error) => {
-                  console.warn("Geolocalização falhou:", error);
+                  console.warn("Geolocalização falhou (timeout ou permissão):", error);
                   resolve(undefined);
               },
-              { timeout: 5000, enableHighAccuracy: true }
+              { timeout: 7000, enableHighAccuracy: true }
           );
       });
   };
@@ -346,8 +391,11 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
 
     try {
         const now = new Date();
-        // Tenta obter a localização (GPS)
         const location = await getLocation();
+
+        if (!location) {
+            showToast("Atenção: Localização não detectada. Ponto será registrado sem GPS.", 'error');
+        }
 
         const newLog: TimeLog = {
             id: generateId(),
@@ -360,7 +408,6 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
         
         saveLog(newLog);
         
-        // Traduz o tipo para o recibo
         const typeLabels: Record<string, string> = {
             [LogType.ENTRY]: "Entrada",
             [LogType.LUNCH_START]: "Início de Intervalo",
@@ -369,7 +416,6 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
         };
         const typeLabel = typeLabels[pendingLogType] || pendingLogType;
 
-        // Monta o link do Google Maps se houver localização
         let locationInfo = "Localização: Não disponível";
         let mapsLink = "";
         
@@ -378,7 +424,6 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
             locationInfo = `Localização: ${location.latitude}, ${location.longitude}\nLink Mapa: ${mapsLink}`;
         }
 
-        // EMAIL NOTIFICATION: Comprovante de Registro (Recibo Digital)
         const receiptSubject = `Comprovante de Ponto: ${typeLabel} - ${now.toLocaleDateString()}`;
         const receiptBody = `
 COMPROVANTE DE REGISTRO DE PONTO
@@ -395,22 +440,23 @@ ${locationInfo}
 Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
         `.trim();
 
-        // Envia o recibo para o email do usuário
-        sendEmail(user.email, receiptSubject, receiptBody);
+        // Send Email (Non-blocking promise, but we wait for UI feedback if wanted, here we just fire)
+        sendEmail(user.email, receiptSubject, receiptBody).then(sent => {
+            if(!sent) console.log("E-mail real falhou, apenas interno salvo.");
+        });
 
         setLogs(getUserLogs(user.id));
         setIsRegisterModalOpen(false);
+        showToast(`Registro de ${typeLabel} realizado com sucesso!`, 'success');
         
-        // LÓGICA DE FINALIZAÇÃO (LOGOUT AUTOMÁTICO NA SAÍDA)
         if (pendingLogType === LogType.EXIT && onLogout) {
-            // Pequeno delay para o usuário ver que foi confirmado
             setTimeout(() => {
                 onLogout();
             }, 1500);
         }
     } catch (e) {
         console.error("Erro ao salvar log", e);
-        alert("Ocorreu um erro ao salvar o ponto. Tente novamente.");
+        showToast("Ocorreu um erro ao salvar o ponto. Tente novamente.", 'error');
     } finally {
         setIsLocationLoading(false);
         setPendingLogType(null);
@@ -427,7 +473,7 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
     setIsEditing(log.id);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!isEditing) return;
     const logToEdit = logs.find(l => l.id === isEditing);
     if (!logToEdit) return;
@@ -437,27 +483,20 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
     const updatedLog = { ...logToEdit, timestamp: newTimestamp, edited: true };
     saveLog(updatedLog);
     
-    // EMAIL NOTIFICATION: Correction Logic
+    let subject = "";
+    let body = "";
+
     if (currentUserRole === Role.EMPLOYEE) {
-        // Employee logic: "Request" correction (simulated via edit)
-        sendEmail(
-            "admin@empresa.com",
-            `Solicitação de Correção: ${user.name}`,
-            `O funcionário ${user.name} solicitou/realizou uma correção no registro de ${oldDate.toLocaleString()} para ${new Date(newTimestamp).toLocaleString()}.`
-        );
-        // Copy to user
-        sendEmail(
-            user.email,
-            "Solicitação de Correção Enviada",
-            `Sua correção do registro foi enviada para o sistema com sucesso.`
-        );
+        subject = `Solicitação de Correção: ${user.name}`;
+        body = `O funcionário ${user.name} solicitou/realizou uma correção no registro de ${oldDate.toLocaleString()} para ${new Date(newTimestamp).toLocaleString()}.`;
+        // Send to admin
+        await sendEmail("admin@empresa.com", subject, body);
+        showToast("Solicitação de correção enviada.", 'success');
     } else {
-        // Admin logic: "Approve/Fix" correction
-        sendEmail(
-            user.email,
-            "Correção de Ponto Aprovada/Realizada",
-            `Uma correção foi realizada em seu registro de ponto pelo Administrador. Novo horário: ${new Date(newTimestamp).toLocaleString()}.`
-        );
+        subject = "Correção de Ponto Aprovada/Realizada";
+        body = `Uma correção foi realizada em seu registro de ponto pelo Administrador. Novo horário: ${new Date(newTimestamp).toLocaleString()}.`;
+        await sendEmail(user.email, subject, body);
+        showToast("Registro corrigido com sucesso.", 'success');
     }
 
     setLogs(getUserLogs(user.id));
@@ -473,7 +512,6 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
     setAnalyzing(false);
   };
 
-  // Chart Data Preparation
   const chartData = React.useMemo(() => {
     const data: Record<string, number> = {};
     logs.forEach(l => {
@@ -488,9 +526,9 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Hero Section: Clock & Actions */}
+      {/* Hero Section */}
       {currentUserRole === Role.EMPLOYEE && (
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900 via-brand-700 to-teal-700 shadow-xl text-white p-6 sm:p-10">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-900 via-brand-700 to-teal-700 shadow-xl text-white p-6 sm:p-10 transition-all duration-500 hover:shadow-2xl">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
         
@@ -558,9 +596,7 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* History Table */}
         <div className="lg:col-span-2 space-y-6">
-            
             {/* Filter Section */}
             <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center text-slate-700 dark:text-slate-200 font-bold mb-4">
@@ -599,53 +635,8 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
                     </Button>
                 </div>
             
-            {/* Mobile Card View */}
-            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-slate-700">
-                {filteredLogs.length === 0 ? (
-                    <div className="text-center text-slate-400 py-10">Nenhum registro encontrado.</div>
-                ) : filteredLogs.map(log => {
-                    const deviation = getTimeDeviation(log, settings);
-                    return (
-                        <div key={log.id} className="p-4 bg-white dark:bg-slate-800 flex justify-between items-center relative">
-                            {deviation && (
-                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${deviation.status === 'late' || deviation.status === 'early' ? 'bg-red-500' : ''}`}></div>
-                            )}
-                            <div className="flex-1">
-                                <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center">
-                                    {new Date(log.timestamp).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}
-                                    <span className="mx-2 text-slate-300 dark:text-slate-600">|</span>
-                                    <span className="font-mono text-slate-600 dark:text-slate-400">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
-                                </div>
-                                <div className="mt-2 flex items-center flex-wrap gap-2">
-                                    <LogBadge type={log.type} />
-                                    {deviation && (
-                                        <span className="text-[10px] bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold border border-red-100 dark:border-red-900/30">
-                                            {deviation.label}
-                                        </span>
-                                    )}
-                                    {log.edited && <span className="text-[10px] text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30">Editado</span>}
-                                    {log.location && (
-                                        <div className="flex items-center text-xs text-brand-500 dark:text-brand-400" title={`Local: ${log.location.latitude}, ${log.location.longitude}`}>
-                                            <div className="scale-75"><MapPinIcon /></div>
-                                        </div>
-                                    )}
-                                    {log.notes && (
-                                        <div className="flex items-center text-xs text-slate-500 dark:text-slate-400" title={log.notes}>
-                                            <div className="scale-75"><FileTextIcon /></div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <button onClick={() => handleEdit(log)} className="p-2 ml-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors" title="Corrigir Registro">
-                                <EditIcon />
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
-
             {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
                 <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
                     <tr>
@@ -815,6 +806,7 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     const [newUser, setNewUser] = useState<Partial<User>>({ role: Role.EMPLOYEE });
     const [settings, setSettingsState] = useState<CompanySettings>(getSettings());
     const [selectedUserForView, setSelectedUserForView] = useState<User | null>(null);
+    const { showToast } = useToast();
 
     useEffect(() => {
         setUsers(getUsers());
@@ -822,13 +814,11 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     }, []);
 
     const handleAddUser = () => {
-        // Validação Explícita para evitar falhas silenciosas
         if (!newUser.name || !newUser.password) {
-            alert("Por favor, preencha o Nome e o Código (Senha).");
+            showToast("Por favor, preencha o Nome e o Código (Senha).", 'error');
             return;
         }
 
-        // Auto-completar email para funcionários que usam nome/código
         let finalEmail = newUser.email;
         if (!finalEmail) {
             const cleanName = newUser.name.toLowerCase().replace(/\s+/g, '.');
@@ -845,7 +835,6 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
         };
         saveUser(user);
         
-        // Notify new user via simulated email
         sendEmail(
             user.email,
             "Bem-vindo ao PontoCerto",
@@ -855,26 +844,28 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
         setUsers(getUsers());
         setIsAddModalOpen(false);
         setNewUser({ role: Role.EMPLOYEE });
+        showToast('Funcionário cadastrado com sucesso!', 'success');
     };
 
     const handleSaveSettings = () => {
         saveSettings(settings);
         setIsSettingsModalOpen(false);
-        // Force refresh via standard page reload or context would be better, but simple update here
-        alert("Configurações salvas com sucesso!");
+        showToast('Configurações salvas com sucesso!', 'success');
     };
 
     const handleDelete = (id: string) => {
         if (window.confirm("Tem certeza que deseja remover este funcionário?")) {
             deleteUser(id);
             setUsers(getUsers());
+            showToast('Funcionário removido.', 'info');
         }
     };
 
     const handleGeneratePDF = (e: React.MouseEvent, user: User) => {
-      e.stopPropagation(); // Prevent opening the details view
+      e.stopPropagation();
       const userLogs = getUserLogs(user.id);
       generateEmployeePDF(user, userLogs, settings);
+      showToast('Relatório PDF gerado!', 'success');
     };
 
     const handleExportData = () => {
@@ -888,6 +879,7 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        showToast('Backup exportado!', 'success');
     };
 
     const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -898,10 +890,10 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
         reader.onload = (e) => {
             const content = e.target?.result as string;
             if (importData(content)) {
-                alert("Dados restaurados com sucesso! A página será recarregada.");
-                window.location.reload();
+                showToast("Dados restaurados! Atualizando...", 'success');
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert("Erro ao importar dados. Verifique se o arquivo é válido.");
+                showToast("Erro ao importar dados.", 'error');
             }
         };
         reader.readAsText(file);
@@ -1002,7 +994,7 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                                         <button onClick={(e) => handleGeneratePDF(e, u)} className="text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 p-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors" title="Gerar Relatório PDF">
                                             <PdfIcon />
                                         </button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir Funcionário">
+                                        <button onClick={() => handleDelete(u.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir Funcionário">
                                             <TrashIcon />
                                         </button>
                                     </div>
@@ -1233,8 +1225,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     initStorage();
-    
-    // Inicializar listeners do Chrome (se disponível)
     initRuntimeListeners();
     initNetworkMonitor();
 
@@ -1244,7 +1234,6 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Theme Effect
   useEffect(() => {
     const root = window.document.documentElement;
     if (theme === 'dark') {
@@ -1267,103 +1256,101 @@ const App: React.FC = () => {
     setAuthState({ user: null, isAuthenticated: false });
   };
 
-  if (!authState.isAuthenticated || !authState.user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 flex flex-col transition-colors duration-300">
-      {/* Navbar */}
-      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20">
-            <div className="flex items-center">
-              {/* LOGO IN NAVBAR */}
-              <div className="flex-shrink-0 flex items-center gap-3">
-                 <img 
-                    src={COMPANY_LOGO} 
-                    alt="Espaço Hidro" 
-                    className="h-10 w-auto object-contain"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                 />
-                 <div className="hidden sm:flex flex-col">
-                    <span className="text-brand-900 dark:text-brand-400 font-bold text-lg leading-tight tracking-tight">PontoCerto</span>
-                    <span className="text-teal-600 dark:text-teal-400 text-xs font-medium tracking-wide">CLÍNICA DE FISIOTERAPIA</span>
-                 </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 sm:space-x-6">
-               
-               {/* Theme Toggle */}
-               <button
-                 onClick={toggleTheme}
-                 className="p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition-colors"
-                 title={theme === 'light' ? "Mudar para Modo Escuro" : "Mudar para Modo Claro"}
-               >
-                 {theme === 'light' ? <MoonIcon /> : <SunIcon />}
-               </button>
-
-               {/* Notification Bell */}
-              <button 
-                onClick={() => setIsNotificationsOpen(true)}
-                className="relative p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition-colors"
-                title="Notificações"
-              >
-                <BellIcon />
-                {notificationCount > 0 && (
-                    <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-slate-900"></span>
-                )}
-              </button>
-
-              <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col items-end hidden sm:flex">
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{authState.user.name}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{authState.user.role === Role.ADMIN ? 'Administrador' : authState.user.position}</span>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-500 to-teal-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
-                    <UserIcon />
-                </div>
-              </div>
-
-              <button 
-                onClick={handleLogout}
-                className="p-2.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-colors ml-2"
-                title="Sair"
-              >
-                <LogOutIcon />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-colors duration-300">
-        {authState.user.role === Role.ADMIN ? (
-             <div className="space-y-10">
-                <AdminDashboard isDark={theme === 'dark'} />
-             </div>
+    <ToastContainer>
+      <OfflineIndicator />
+      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-900 flex flex-col transition-colors duration-300">
+        {!authState.isAuthenticated || !authState.user ? (
+          <Login onLogin={handleLogin} />
         ) : (
-            <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} isDark={theme === 'dark'} onLogout={handleLogout} />
+          <>
+            <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between h-20">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 flex items-center gap-3">
+                      <img 
+                          src={COMPANY_LOGO} 
+                          alt="Espaço Hidro" 
+                          className="h-10 w-auto object-contain"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <div className="hidden sm:flex flex-col">
+                          <span className="text-brand-900 dark:text-brand-400 font-bold text-lg leading-tight tracking-tight">PontoCerto</span>
+                          <span className="text-teal-600 dark:text-teal-400 text-xs font-medium tracking-wide">CLÍNICA DE FISIOTERAPIA</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 sm:space-x-6">
+                    <button
+                      onClick={toggleTheme}
+                      className="p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition-colors"
+                      title={theme === 'light' ? "Mudar para Modo Escuro" : "Mudar para Modo Claro"}
+                    >
+                      {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+                    </button>
+
+                    <button 
+                      onClick={() => setIsNotificationsOpen(true)}
+                      className="relative p-2.5 rounded-full text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 dark:hover:text-brand-400 transition-colors"
+                      title="Notificações"
+                    >
+                      <BellIcon />
+                      {notificationCount > 0 && (
+                          <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-slate-900 animate-pulse"></span>
+                      )}
+                    </button>
+
+                    <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-end hidden sm:flex">
+                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{authState.user.name}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{authState.user.role === Role.ADMIN ? 'Administrador' : authState.user.position}</span>
+                      </div>
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-500 to-teal-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                          <UserIcon />
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={handleLogout}
+                      className="p-2.5 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-colors ml-2"
+                      title="Sair"
+                    >
+                      <LogOutIcon />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-colors duration-300">
+              {authState.user.role === Role.ADMIN ? (
+                  <div className="space-y-10">
+                      <AdminDashboard isDark={theme === 'dark'} />
+                  </div>
+              ) : (
+                  <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} isDark={theme === 'dark'} onLogout={handleLogout} />
+              )}
+            </main>
+
+            <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-auto transition-colors duration-300">
+              <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                  &copy; 2024 PontoCerto • Sistema Interno
+                </p>
+                <p className="text-xs text-slate-300 dark:text-slate-600">
+                  Desenvolvido para Espaço Hidro
+                </p>
+              </div>
+            </footer>
+
+            <NotificationCenter isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+          </>
         )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-auto transition-colors duration-300">
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
-            &copy; 2024 PontoCerto • Sistema Interno
-          </p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">
-             Desenvolvido para Espaço Hidro
-          </p>
-        </div>
-      </footer>
-
-      <NotificationCenter isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
-    </div>
+      </div>
+    </ToastContainer>
   );
 };
 

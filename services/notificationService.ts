@@ -19,7 +19,8 @@ export const getNotifications = (): EmailNotification[] => {
   return stored ? JSON.parse(stored) : [];
 };
 
-export const sendEmail = (to: string, subject: string, body: string) => {
+// Agora retorna uma Promise<boolean> para saber se foi sucesso ou falha
+export const sendEmail = async (to: string, subject: string, body: string): Promise<boolean> => {
   const notifications = getNotifications();
   const id = generateId();
   const newEmail: EmailNotification = {
@@ -52,21 +53,22 @@ export const sendEmail = (to: string, subject: string, body: string) => {
           message: body
       };
 
-      emailjs.send(
-          settings.emailJsServiceId,
-          settings.emailJsTemplateId,
-          templateParams,
-          settings.emailJsPublicKey
-      )
-      .then((response) => {
-         console.log('EMAIL REAL ENVIADO COM SUCESSO!', response.status, response.text);
-      })
-      .catch((err) => {
+      try {
+          const response = await emailjs.send(
+              settings.emailJsServiceId,
+              settings.emailJsTemplateId,
+              templateParams,
+              settings.emailJsPublicKey
+          );
+          console.log('EMAIL REAL ENVIADO COM SUCESSO!', response.status, response.text);
+          return true;
+      } catch (err) {
          console.error('FALHA AO ENVIAR EMAIL REAL:', err);
-         // Não alertamos o usuário final para não interromper o fluxo, mas o admin pode ver no console
-      });
+         return false;
+      }
   } else {
-      console.warn("EmailJS não configurado. O e-mail real não foi enviado (apenas notificação interna). Configure nas opções de Administrador.");
+      console.warn("EmailJS não configurado. O e-mail real não foi enviado (apenas notificação interna).");
+      return true; // Retorna true pois o fallback interno funcionou
   }
 };
 
