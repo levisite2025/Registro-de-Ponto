@@ -1,7 +1,7 @@
 {
   "name": "PontoCerto - Sistema de Ponto",
   "short_name": "PontoCerto",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "manifest_version": 3,
   "description": "Sistema completo de registro de ponto eletrônico com gestão de funcionários.",
   "permissions": [
@@ -20,6 +20,9 @@
     "default_popup": "index.html",
     "default_title": "Abrir PontoCerto"
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
   "oauth2": {
     "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
     "scopes": [
@@ -31,5 +34,11 @@
     "16": "logo192.png",
     "48": "logo192.png",
     "128": "logo192.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html", "logo192.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
