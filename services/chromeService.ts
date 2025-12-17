@@ -1,18 +1,35 @@
-// Abstração para APIs do Chrome com Fallback para Web
-// Garante que o app funcione tanto no navegador comum quanto como Extensão/App Chrome
+// Abstração para APIs do Navegador (Chrome/Edge) com Fallback para Web
+// Garante que o app funcione no Chrome, Edge e navegadores Web padrão
 
 declare var chrome: any;
+declare var browser: any; // Namespace padrão WebExtensions usado também pelo Edge/Firefox
 
-export const isChromeApp = (): boolean => {
-  return typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
+// Helper para obter a API do navegador disponível
+const getBrowserAPI = () => {
+  if (typeof browser !== 'undefined') {
+    return browser;
+  }
+  if (typeof chrome !== 'undefined') {
+    return chrome;
+  }
+  return null;
 };
 
-// --- CHROME NOTIFICATIONS ---
+export const isExtension = (): boolean => {
+  const api = getBrowserAPI();
+  return !!(api && api.runtime && api.runtime.id);
+};
+
+// Mantemos isChromeApp para compatibilidade com código existente, mas usando a nova detecção
+export const isChromeApp = isExtension;
+
+// --- NOTIFICATIONS (Chrome & Edge) ---
 export const sendChromeNotification = (id: string, title: string, message: string) => {
-  if (isChromeApp() && chrome.notifications) {
-    chrome.notifications.create(id, {
+  const api = getBrowserAPI();
+  if (isExtension() && api.notifications) {
+    api.notifications.create(id, {
       type: 'basic',
-      iconUrl: 'logo192.png', // Certifique-se de ter um ícone ou use um placeholder
+      iconUrl: 'logo192.png', // Placeholder icon
       title: title,
       message: message,
       priority: 2
@@ -31,13 +48,15 @@ export const sendChromeNotification = (id: string, title: string, message: strin
   }
 };
 
-// --- CHROME STORAGE (Sync Backup) ---
-// Nota: Chrome Storage é assíncrono. Usamos como backup do localStorage síncrono.
+// --- STORAGE (Sync Backup) ---
+// Funciona com chrome.storage ou browser.storage
 export const syncToChromeStorage = (key: string, data: any) => {
-  if (isChromeApp() && chrome.storage) {
-    chrome.storage.local.set({ [key]: data }, () => {
-      if (chrome.runtime.lastError) {
-        console.error("Erro ao salvar no Chrome Storage:", chrome.runtime.lastError);
+  const api = getBrowserAPI();
+  if (isExtension() && api.storage) {
+    api.storage.local.set({ [key]: data }, () => {
+      // Chrome usa callback, Browser usa Promise, mas Chrome também aceita callback no Edge
+      if (api.runtime.lastError) {
+        console.error("Erro ao salvar no Storage do Navegador:", api.runtime.lastError);
       }
     });
   }
@@ -45,8 +64,9 @@ export const syncToChromeStorage = (key: string, data: any) => {
 
 export const getFromChromeStorage = (key: string): Promise<any> => {
   return new Promise((resolve) => {
-    if (isChromeApp() && chrome.storage) {
-      chrome.storage.local.get([key], (result) => {
+    const api = getBrowserAPI();
+    if (isExtension() && api.storage) {
+      api.storage.local.get([key], (result: any) => {
         resolve(result[key] || null);
       });
     } else {
@@ -55,22 +75,24 @@ export const getFromChromeStorage = (key: string): Promise<any> => {
   });
 };
 
-// --- CHROME IDENTITY ---
+// --- IDENTITY ---
 export const getChromeIdentity = (): Promise<{email?: string, id?: string} | null> => {
   return new Promise((resolve) => {
-    if (isChromeApp() && chrome.identity) {
-      chrome.identity.getProfileUserInfo((userInfo) => {
-        if (userInfo) {
+    const api = getBrowserAPI();
+    if (isExtension() && api.identity) {
+      // Edge e Chrome suportam getProfileUserInfo
+      api.identity.getProfileUserInfo((userInfo: any) => {
+        if (userInfo && userInfo.email) {
           resolve(userInfo);
         } else {
-          // Tentar fluxo interativo se necessário
-          chrome.identity.getAuthToken({ interactive: true }, (token) => {
-             if (chrome.runtime.lastError || !token) {
+          // Fallback ou tentativa de auth interativa
+          // Nota: No Edge, isso pode exigir configuração específica no manifesto e loja
+          api.identity.getAuthToken({ interactive: true }, (token: string) => {
+             if (api.runtime.lastError || !token) {
                resolve(null);
                return;
              }
-             // Com o token, poderíamos buscar detalhes na API do Google
-             resolve({ email: 'usuario_autenticado@chrome.app' }); 
+             resolve({ email: 'usuario_autenticado@extension' }); 
           });
         }
       });
@@ -80,47 +102,53 @@ export const getChromeIdentity = (): Promise<{email?: string, id?: string} | nul
   });
 };
 
-// --- CHROME RUNTIME & LIFECYCLE ---
+// --- RUNTIME & LIFECYCLE ---
 export const initRuntimeListeners = () => {
-  if (isChromeApp() && chrome.app && chrome.app.runtime) {
-    // Apenas para Chrome Apps (Legado)
-    chrome.app.runtime.onLaunched.addListener(() => {
-       console.log("App iniciado via Chrome Runtime");
-       // Lógica de abertura de janela seria aqui para Chrome Apps
+  const api = getBrowserAPI();
+  
+  // Suporte a Chrome Apps Legado (apenas se existir a API específica)
+  if (api && api.app && api.app.runtime && api.app.runtime.onLaunched) {
+    api.app.runtime.onLaunched.addListener(() => {
+       console.log("App iniciado via Runtime (Chrome App Legacy)");
     });
   }
   
-  if (isChromeApp() && chrome.runtime) {
-    // Listeners genéricos de extensão
-    chrome.runtime.onInstalled.addListener(() => {
-      console.log("Extensão/App instalado.");
-    });
+  if (isExtension() && api.runtime) {
+    // Listeners genéricos de extensão (Chrome + Edge)
+    if (api.runtime.onInstalled) {
+        api.runtime.onInstalled.addListener(() => {
+        console.log("Extensão instalada/atualizada no navegador.");
+        });
+    }
     
-    chrome.runtime.onSuspend.addListener(() => {
-      console.log("App sendo suspenso. Salvando dados críticos...");
-    });
+    if (api.runtime.onSuspend) {
+        api.runtime.onSuspend.addListener(() => {
+        console.log("Extensão sendo suspensa.");
+        });
+    }
   }
 };
 
 // --- NETWORK / SOCKETS STUB ---
-// APIs de socket (chrome.sockets.*) são exclusivas de Chrome Apps ou extensões específicas.
-// Web Apps usam WebSockets ou Fetch.
 export const initNetworkMonitor = () => {
-  if (isChromeApp()) {
-      // Exemplo de uso de system.network se disponível
-      // @ts-ignore - Tipagem para APIs específicas pode não estar disponível
-      if (chrome.system && chrome.system.network) {
+  const api = getBrowserAPI();
+
+  if (isExtension()) {
+      // APIs de sistema (chrome.system.*) são mais comuns em Chrome OS ou Apps, 
+      // mas verificamos a existência antes de usar para evitar erros no Edge.
+      
+      // @ts-ignore
+      if (api.system && api.system.network) {
           // @ts-ignore
-          chrome.system.network.getNetworkInterfaces((interfaces) => {
-              console.log("Interfaces de Rede detectadas (Chrome API):", interfaces);
+          api.system.network.getNetworkInterfaces((interfaces) => {
+              console.log("Interfaces de Rede detectadas (Extensão):", interfaces);
           });
       }
       
-      // Stub para Sockets TCP (apenas para demonstrar integração)
+      // Stub para Sockets TCP
       // @ts-ignore
-      if (chrome.sockets && chrome.sockets.tcp) {
+      if (api.sockets && api.sockets.tcp) {
         console.log("API de Sockets TCP disponível.");
-        // chrome.sockets.tcp.create({}, (createInfo) => { ... });
       }
   }
   

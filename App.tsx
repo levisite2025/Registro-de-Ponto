@@ -29,6 +29,7 @@ const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 const SunIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>;
 const MoonIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>;
 const CoffeeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>;
+const FileTextIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
 
 // --- HELPER COMPONENTS ---
 
@@ -190,6 +191,12 @@ const getTimeDeviation = (log: TimeLog, settings: CompanySettings) => {
 const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: boolean }> = ({ user, currentUserRole, isDark }) => {
   const [logs, setLogs] = useState<TimeLog[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Registration Modal State
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [pendingLogType, setPendingLogType] = useState<LogType | null>(null);
+  const [logNotes, setLogNotes] = useState('');
+
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editDate, setEditDate] = useState('');
   const [editTime, setEditTime] = useState('');
@@ -243,24 +250,35 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
     setFilterType('ALL');
   };
 
-  const handleRegister = (type: LogType) => {
+  const initiateRegister = (type: LogType) => {
+    setPendingLogType(type);
+    setLogNotes('');
+    setIsRegisterModalOpen(true);
+  };
+
+  const finalizeRegister = () => {
+    if (!pendingLogType) return;
+
     const now = new Date();
     const newLog: TimeLog = {
       id: generateId(),
       userId: user.id,
       timestamp: now.toISOString(),
-      type
+      type: pendingLogType,
+      notes: logNotes.trim() || undefined
     };
     saveLog(newLog);
     
     // EMAIL NOTIFICATION: Successful Registration
     sendEmail(
         user.email,
-        `Registro de Ponto Confirmado: ${type}`,
-        `Olá ${user.name}, seu registro de ${type} foi realizado com sucesso em ${now.toLocaleDateString()} às ${now.toLocaleTimeString()}.`
+        `Registro de Ponto Confirmado: ${pendingLogType}`,
+        `Olá ${user.name}, seu registro de ${pendingLogType} foi realizado com sucesso em ${now.toLocaleDateString()} às ${now.toLocaleTimeString()}. ${logNotes ? `Observação: ${logNotes}` : ''}`
     );
 
     setLogs(getUserLogs(user.id));
+    setIsRegisterModalOpen(false);
+    setPendingLogType(null);
   };
 
   const handleEdit = (log: TimeLog) => {
@@ -354,7 +372,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
 
             <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                 <button 
-                    onClick={() => handleRegister(LogType.ENTRY)} 
+                    onClick={() => initiateRegister(LogType.ENTRY)} 
                     disabled={lastType === LogType.ENTRY || lastType === LogType.LUNCH_START || lastType === LogType.LUNCH_END}
                     className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
                 >
@@ -363,7 +381,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                 </button>
 
                 <button 
-                    onClick={() => handleRegister(LogType.LUNCH_START)} 
+                    onClick={() => initiateRegister(LogType.LUNCH_START)} 
                     disabled={lastType !== LogType.ENTRY}
                     className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
                 >
@@ -372,7 +390,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                 </button>
 
                 <button 
-                    onClick={() => handleRegister(LogType.LUNCH_END)} 
+                    onClick={() => initiateRegister(LogType.LUNCH_END)} 
                     disabled={lastType !== LogType.LUNCH_START}
                     className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
                 >
@@ -381,7 +399,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                 </button>
 
                 <button 
-                    onClick={() => handleRegister(LogType.EXIT)} 
+                    onClick={() => initiateRegister(LogType.EXIT)} 
                     disabled={lastType === LogType.EXIT || lastType === LogType.LUNCH_START}
                     className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
                 >
@@ -460,6 +478,11 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                                         </span>
                                     )}
                                     {log.edited && <span className="text-[10px] text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30">Editado</span>}
+                                    {log.notes && (
+                                        <div className="flex items-center text-xs text-slate-500 dark:text-slate-400" title={log.notes}>
+                                            <div className="scale-75"><FileTextIcon /></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <button onClick={() => handleEdit(log)} className="p-2 ml-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors" title="Corrigir Registro">
@@ -502,7 +525,14 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                             </td>
                             <td className="p-4"><LogBadge type={log.type} /></td>
                             <td className="p-4">
+                                <div className="flex items-center gap-2">
                                 {log.edited ? <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full font-medium border border-amber-100 dark:border-amber-900/30">Corrigido</span> : <span className="text-xs text-slate-400">-</span>}
+                                {log.notes && (
+                                    <div className="text-slate-400 hover:text-brand-500 cursor-help transition-colors" title={`Observação: ${log.notes}`}>
+                                        <FileTextIcon />
+                                    </div>
+                                )}
+                                </div>
                             </td>
                             <td className="p-4 text-right">
                             <button onClick={() => handleEdit(log)} className="text-slate-400 hover:text-brand-600 p-2 hover:bg-brand-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Corrigir Registro">
@@ -557,6 +587,37 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
             )}
         </div>
       </div>
+
+      {/* Register Confirmation Modal */}
+      <Modal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)} title="Confirmar Registro">
+        <div className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50 flex flex-col items-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wide mb-1">Você está registrando</p>
+                <p className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-2">{pendingLogType === LogType.ENTRY ? 'Entrada' : pendingLogType === LogType.LUNCH_START ? 'Saída Almoço' : pendingLogType === LogType.LUNCH_END ? 'Volta Almoço' : 'Saída'}</p>
+                <div className="text-3xl font-mono text-slate-800 dark:text-white font-bold">
+                    {currentTime.toLocaleTimeString('pt-BR')}
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 ml-1">
+                    Observações (Opcional)
+                </label>
+                <textarea 
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white resize-none"
+                    rows={3}
+                    placeholder="Ex: Cheguei atrasado devido ao trânsito; Consulta médica; etc."
+                    value={logNotes}
+                    onChange={(e) => setLogNotes(e.target.value)}
+                />
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-700 mt-2">
+                <Button variant="ghost" onClick={() => setIsRegisterModalOpen(false)}>Cancelar</Button>
+                <Button onClick={finalizeRegister} className="px-8">Confirmar</Button>
+            </div>
+        </div>
+      </Modal>
 
       {/* Edit Modal */}
       <Modal isOpen={!!isEditing} onClose={() => setIsEditing(null)} title={currentUserRole === Role.ADMIN ? "Aprovar/Corrigir Registro" : "Solicitar Correção"}>
