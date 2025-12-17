@@ -25,35 +25,30 @@ export const initStorage = async () => {
   let usersStr = localStorage.getItem(USERS_KEY);
   
   // ESTRATÉGIA ROBUSTA: Garantir que o admin exista no LocalStorage IMEDIATAMENTE.
-  // Isso previne que a UI tente renderizar ou fazer login antes da promise do Chrome resolver.
   if (!usersStr) {
     const adminUser: User = {
       id: '1',
       name: 'Administrador',
-      email: 'admin@empresa.com',
-      password: 'admin',
+      email: 'admin@empresa.com', // Login do Admin via Email
+      password: 'admin',          // Senha padrão do Admin
       role: Role.ADMIN,
-      position: 'Gerente'
+      position: 'Gerente Geral'
     };
     const initialUsers = [adminUser];
     
     // Salva imediatamente no síncrono
     localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers));
     
-    // Tenta recuperar backup do Chrome depois (se existir, sobrescreve)
-    // Isso é útil se o usuário limpou o cache do navegador mas tem dados sincronizados na conta Google
+    // Tenta recuperar backup do Chrome depois
     getFromChromeStorage(USERS_KEY).then((chromeUsers) => {
         if (chromeUsers && Array.isArray(chromeUsers) && chromeUsers.length > 0) {
              console.log("Dados recuperados do Chrome Storage.");
              localStorage.setItem(USERS_KEY, JSON.stringify(chromeUsers));
-             // Recarrega a página se necessário ou despacha evento (opcional)
         } else {
-             // Se não tem nada no Chrome, garante o backup do inicial
              syncToChromeStorage(USERS_KEY, initialUsers);
         }
     });
   } else {
-      // Se já existe localmente, faz um backup silencioso para o Chrome para manter sincronia
       try {
         const currentUsers = JSON.parse(usersStr);
         syncToChromeStorage(USERS_KEY, currentUsers);

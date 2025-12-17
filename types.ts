@@ -26,6 +26,11 @@ export interface User {
   position?: string;
 }
 
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+}
+
 export interface TimeLog {
   id: string;
   userId: string;
@@ -33,6 +38,7 @@ export interface TimeLog {
   type: LogType;
   edited?: boolean;
   notes?: string;
+  location?: GeoLocation;
 }
 
 export interface AuthState {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AuthState, User, Role, TimeLog, LogType, CompanySettings } from './types';
+import { AuthState, User, Role, TimeLog, LogType, CompanySettings, GeoLocation } from './types';
 import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings, generateId } from './services/storageService';
 import { generateMonthlyReportAnalysis } from './services/geminiService';
 import { sendEmail, getNotifications, markAllAsRead, checkEndOfDayReminder, EmailNotification, clearNotifications } from './services/notificationService';
@@ -24,40 +24,73 @@ const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" he
 const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>;
 const MailIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>;
 const PdfIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
-const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
 const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
 const SunIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>;
 const MoonIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>;
 const CoffeeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>;
 const FileTextIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
+const MapPinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
 
 // --- HELPER COMPONENTS ---
 
 const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState(''); // Pode ser Nome (Func) ou Email (Admin)
+  const [credential, setCredential] = useState(''); // Pode ser Código (Func) ou Senha (Admin)
   const [error, setError] = useState('');
-  const [chromeUser, setChromeUser] = useState<string | null>(null);
+  
+  // Clock State
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    // Clock Interval
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
     // Tenta identificar usuário via Chrome Identity
     getChromeIdentity().then(info => {
       if (info && info.email) {
-        setChromeUser(info.email);
-        setEmail(info.email);
+        // Se detectarmos um email via Chrome, preenchemos automaticamente
+        setIdentifier(info.email);
       }
     });
+
+    return () => clearInterval(timer);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-      onLogin(user);
-    } else {
-      setError('Credenciais inválidas. Tente admin@empresa.com / admin');
+    const inputId = identifier.trim();
+    const inputCred = credential.trim();
+    
+    // Lógica Híbrida de Login:
+    
+    // 1. Tentar Login como ADMIN (Email & Senha)
+    const adminUser = users.find(u => 
+        u.role === Role.ADMIN && 
+        u.email.toLowerCase() === inputId.toLowerCase() &&
+        u.password === inputCred
+    );
+
+    if (adminUser) {
+        onLogin(adminUser);
+        return;
     }
+
+    // 2. Tentar Login como FUNCIONÁRIO (Primeiro Nome & Código)
+    // Funcionários não usam email no login, apenas o primeiro nome e o código numérico
+    const employeeUser = users.find(u => {
+        if (u.role === Role.ADMIN) return false; // Admins devem logar com email
+        const uFirstName = u.name.split(' ')[0].toLowerCase();
+        return uFirstName === inputId.toLowerCase() && u.password === inputCred;
+    });
+
+    if (employeeUser) {
+        onLogin(employeeUser);
+        return;
+    }
+
+    setError('Credenciais inválidas. Verifique seus dados.');
   };
 
   return (
@@ -70,9 +103,9 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
 
       <div className="max-w-4xl w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10 transition-colors duration-300">
         
-        {/* Left Side: Brand Area */}
+        {/* Left Side: Brand & Clock Area */}
         <div className="md:w-1/2 bg-slate-50 dark:bg-slate-800/50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 relative">
-            <div className="mb-8 p-6 bg-white dark:bg-slate-700 rounded-full shadow-lg">
+            <div className="mb-6 p-6 bg-white dark:bg-slate-700 rounded-full shadow-lg">
                 <img 
                     src={COMPANY_LOGO} 
                     alt="Espaço Hidro" 
@@ -80,51 +113,65 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
             </div>
+            
+            {/* Relógio Digital */}
+            <div className="flex flex-col items-center mb-6">
+                <div className="text-5xl font-mono font-bold text-slate-700 dark:text-white tracking-widest drop-shadow-sm">
+                    {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+                <div className="text-sm text-brand-600 dark:text-brand-400 font-medium uppercase tracking-wide mt-2">
+                    {currentTime.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </div>
+            </div>
+
             <h1 className="text-3xl font-extrabold text-brand-900 dark:text-brand-400 mb-2">PontoCerto</h1>
-            <p className="text-slate-500 dark:text-slate-400 text-center text-sm px-8">Sistema inteligente de gestão de ponto e produtividade.</p>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm px-8">Sistema inteligente de gestão de ponto.</p>
         </div>
 
         {/* Right Side: Form */}
         <div className="md:w-1/2 p-8 md:p-12">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center md:text-left">Bem-vindo de volta</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center md:text-left">Identifique-se</h2>
             
-            {chromeUser && (
-               <div className="mb-4 p-3 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 text-sm rounded-lg flex items-center">
-                 <UserIcon /> <span className="ml-2">Identificado via Chrome: {chromeUser}</span>
-               </div>
-            )}
-
             <form className="space-y-5" onSubmit={handleSubmit}>
             {error && <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 text-sm p-3 rounded-lg border border-red-100 dark:border-red-900/50 flex items-center justify-center">{error}</div>}
             <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Email Corporativo</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                    Funcionário (Nome) / Admin (Email)
+                </label>
                 <input 
-                type="email" 
+                type="text" 
                 required 
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800 dark:text-slate-100"
-                placeholder="seunome@empresa.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                placeholder="Ex: Maria ou admin@empresa.com"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 />
             </div>
             <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Senha</label>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                    Código (Func) / Senha (Admin)
+                </label>
                 <input 
                 type="password" 
                 required 
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800 dark:text-slate-100"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 font-mono text-center tracking-widest text-lg"
+                placeholder="••••"
+                value={credential}
+                onChange={e => setCredential(e.target.value)}
                 />
             </div>
-            <Button type="submit" className="w-full py-3 text-lg shadow-lg shadow-blue-500/30">Acessar Sistema</Button>
+            <Button type="submit" className="w-full py-3 text-lg shadow-lg shadow-blue-500/30">Entrar</Button>
             </form>
             
-            <div className="mt-6 text-center">
+            <div className="mt-8 text-center space-y-3">
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                Demo: admin@empresa.com / admin
+                Admin Padrão: admin@empresa.com / admin
                 </p>
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                        Desenvolvido por <span className="font-semibold text-brand-600 dark:text-brand-400">Levi Chagas Araujo</span>
+                    </p>
+                </div>
             </div>
         </div>
       </div>
@@ -188,7 +235,7 @@ const getTimeDeviation = (log: TimeLog, settings: CompanySettings) => {
 
 // --- DASHBOARDS ---
 
-const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: boolean }> = ({ user, currentUserRole, isDark }) => {
+const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: boolean, onLogout?: () => void }> = ({ user, currentUserRole, isDark, onLogout }) => {
   const [logs, setLogs] = useState<TimeLog[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -196,6 +243,7 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [pendingLogType, setPendingLogType] = useState<LogType | null>(null);
   const [logNotes, setLogNotes] = useState('');
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
 
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editDate, setEditDate] = useState('');
@@ -244,6 +292,16 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
     });
   }, [logs, filterStartDate, filterEndDate, filterType]);
 
+  // Verificação de segurança: Dia encerrado
+  // Bloqueia se o usuário já tem um registro de SAÍDA (EXIT) na data atual
+  const isWorkDayFinished = useMemo(() => {
+      const today = new Date().toLocaleDateString('pt-BR');
+      return logs.some(l => 
+          l.type === LogType.EXIT && 
+          new Date(l.timestamp).toLocaleDateString('pt-BR') === today
+      );
+  }, [logs]);
+
   const clearFilters = () => {
     setFilterStartDate('');
     setFilterEndDate('');
@@ -256,29 +314,105 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
     setIsRegisterModalOpen(true);
   };
 
-  const finalizeRegister = () => {
+  // Helper function to get location securely
+  const getLocation = (): Promise<GeoLocation | undefined> => {
+      return new Promise((resolve) => {
+          if (!navigator.geolocation) {
+              resolve(undefined);
+              return;
+          }
+          navigator.geolocation.getCurrentPosition(
+              (position) => {
+                  resolve({
+                      latitude: position.coords.latitude,
+                      longitude: position.coords.longitude
+                  });
+              },
+              (error) => {
+                  console.warn("Geolocalização falhou:", error);
+                  resolve(undefined);
+              },
+              { timeout: 5000, enableHighAccuracy: true }
+          );
+      });
+  };
+
+  const finalizeRegister = async () => {
     if (!pendingLogType) return;
-
-    const now = new Date();
-    const newLog: TimeLog = {
-      id: generateId(),
-      userId: user.id,
-      timestamp: now.toISOString(),
-      type: pendingLogType,
-      notes: logNotes.trim() || undefined
-    };
-    saveLog(newLog);
     
-    // EMAIL NOTIFICATION: Successful Registration
-    sendEmail(
-        user.email,
-        `Registro de Ponto Confirmado: ${pendingLogType}`,
-        `Olá ${user.name}, seu registro de ${pendingLogType} foi realizado com sucesso em ${now.toLocaleDateString()} às ${now.toLocaleTimeString()}. ${logNotes ? `Observação: ${logNotes}` : ''}`
-    );
+    setIsLocationLoading(true);
 
-    setLogs(getUserLogs(user.id));
-    setIsRegisterModalOpen(false);
-    setPendingLogType(null);
+    try {
+        const now = new Date();
+        // Tenta obter a localização (GPS)
+        const location = await getLocation();
+
+        const newLog: TimeLog = {
+            id: generateId(),
+            userId: user.id,
+            timestamp: now.toISOString(),
+            type: pendingLogType,
+            notes: logNotes.trim() || undefined,
+            location: location
+        };
+        
+        saveLog(newLog);
+        
+        // Traduz o tipo para o recibo
+        const typeLabels: Record<string, string> = {
+            [LogType.ENTRY]: "Entrada",
+            [LogType.LUNCH_START]: "Início de Intervalo",
+            [LogType.LUNCH_END]: "Fim de Intervalo",
+            [LogType.EXIT]: "Saída"
+        };
+        const typeLabel = typeLabels[pendingLogType] || pendingLogType;
+
+        // Monta o link do Google Maps se houver localização
+        let locationInfo = "Localização: Não disponível";
+        let mapsLink = "";
+        
+        if (location) {
+            mapsLink = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+            locationInfo = `Localização: ${location.latitude}, ${location.longitude}\nLink Mapa: ${mapsLink}`;
+        }
+
+        // EMAIL NOTIFICATION: Comprovante de Registro (Recibo Digital)
+        const receiptSubject = `Comprovante de Ponto: ${typeLabel} - ${now.toLocaleDateString()}`;
+        const receiptBody = `
+COMPROVANTE DE REGISTRO DE PONTO
+--------------------------------
+Colaborador: ${user.name}
+Data: ${now.toLocaleDateString()}
+Horário: ${now.toLocaleTimeString()}
+Tipo de Registro: ${typeLabel}
+ID do Registro: ${newLog.id}
+${logNotes ? `Observação: ${logNotes}` : ''}
+
+${locationInfo}
+--------------------------------
+Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
+        `.trim();
+
+        // Envia o recibo para o email do usuário
+        sendEmail(user.email, receiptSubject, receiptBody);
+
+        setLogs(getUserLogs(user.id));
+        setIsRegisterModalOpen(false);
+        
+        // LÓGICA DE FINALIZAÇÃO (LOGOUT AUTOMÁTICO NA SAÍDA)
+        if (pendingLogType === LogType.EXIT && onLogout) {
+            // Pequeno delay para o usuário ver que foi confirmado
+            setTimeout(() => {
+                onLogout();
+            }, 1500);
+        }
+    } catch (e) {
+        console.error("Erro ao salvar log", e);
+        alert("Ocorreu um erro ao salvar o ponto. Tente novamente.");
+    } finally {
+        setIsLocationLoading(false);
+        setPendingLogType(null);
+    }
   };
 
   const handleEdit = (log: TimeLog) => {
@@ -370,43 +504,53 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
-                <button 
-                    onClick={() => initiateRegister(LogType.ENTRY)} 
-                    disabled={lastType === LogType.ENTRY || lastType === LogType.LUNCH_START || lastType === LogType.LUNCH_END}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
-                >
-                    <div className="bg-emerald-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><SunIcon /></div>
-                    <span className="font-semibold text-sm">Entrada</span>
-                </button>
+            {isWorkDayFinished ? (
+                 <div className="w-full max-w-lg bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 text-center shadow-lg">
+                    <div className="flex justify-center mb-2 text-brand-100">
+                        <LogOutIcon />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-1">Expediente Finalizado</h3>
+                    <p className="text-brand-100 text-sm">Você já registrou sua saída hoje. Bom descanso!</p>
+                 </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                    <button 
+                        onClick={() => initiateRegister(LogType.ENTRY)} 
+                        disabled={lastType === LogType.ENTRY || lastType === LogType.LUNCH_START || lastType === LogType.LUNCH_END}
+                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                    >
+                        <div className="bg-emerald-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><SunIcon /></div>
+                        <span className="font-semibold text-sm">Entrada</span>
+                    </button>
 
-                <button 
-                    onClick={() => initiateRegister(LogType.LUNCH_START)} 
-                    disabled={lastType !== LogType.ENTRY}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
-                >
-                     <div className="bg-amber-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><CoffeeIcon /></div>
-                    <span className="font-semibold text-sm">Sair Almoço</span>
-                </button>
+                    <button 
+                        onClick={() => initiateRegister(LogType.LUNCH_START)} 
+                        disabled={lastType !== LogType.ENTRY}
+                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                    >
+                        <div className="bg-amber-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><CoffeeIcon /></div>
+                        <span className="font-semibold text-sm">Sair Almoço</span>
+                    </button>
 
-                <button 
-                    onClick={() => initiateRegister(LogType.LUNCH_END)} 
-                    disabled={lastType !== LogType.LUNCH_START}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
-                >
-                    <div className="bg-indigo-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><CoffeeIcon /></div>
-                    <span className="font-semibold text-sm">Voltar Almoço</span>
-                </button>
+                    <button 
+                        onClick={() => initiateRegister(LogType.LUNCH_END)} 
+                        disabled={lastType !== LogType.LUNCH_START}
+                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                    >
+                        <div className="bg-indigo-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><CoffeeIcon /></div>
+                        <span className="font-semibold text-sm">Voltar Almoço</span>
+                    </button>
 
-                <button 
-                    onClick={() => initiateRegister(LogType.EXIT)} 
-                    disabled={lastType === LogType.EXIT || lastType === LogType.LUNCH_START}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
-                >
-                    <div className="bg-rose-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><LogOutIcon /></div>
-                    <span className="font-semibold text-sm">Saída</span>
-                </button>
-            </div>
+                    <button 
+                        onClick={() => initiateRegister(LogType.EXIT)} 
+                        disabled={lastType === LogType.EXIT || lastType === LogType.LUNCH_START}
+                        className="flex flex-col items-center justify-center p-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm transition-all disabled:opacity-30 disabled:hover:bg-white/10 group"
+                    >
+                        <div className="bg-rose-500/20 p-2 rounded-full mb-2 group-hover:scale-110 transition-transform"><LogOutIcon /></div>
+                        <span className="font-semibold text-sm">Saída</span>
+                    </button>
+                </div>
+            )}
         </div>
       </div>
       )}
@@ -478,6 +622,11 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                                         </span>
                                     )}
                                     {log.edited && <span className="text-[10px] text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-900/30">Editado</span>}
+                                    {log.location && (
+                                        <div className="flex items-center text-xs text-brand-500 dark:text-brand-400" title={`Local: ${log.location.latitude}, ${log.location.longitude}`}>
+                                            <div className="scale-75"><MapPinIcon /></div>
+                                        </div>
+                                    )}
                                     {log.notes && (
                                         <div className="flex items-center text-xs text-slate-500 dark:text-slate-400" title={log.notes}>
                                             <div className="scale-75"><FileTextIcon /></div>
@@ -527,6 +676,11 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
                             <td className="p-4">
                                 <div className="flex items-center gap-2">
                                 {log.edited ? <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full font-medium border border-amber-100 dark:border-amber-900/30">Corrigido</span> : <span className="text-xs text-slate-400">-</span>}
+                                {log.location && (
+                                    <a href={`https://www.google.com/maps?q=${log.location.latitude},${log.location.longitude}`} target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-600 transition-colors" title="Ver Localização">
+                                        <MapPinIcon />
+                                    </a>
+                                )}
                                 {log.notes && (
                                     <div className="text-slate-400 hover:text-brand-500 cursor-help transition-colors" title={`Observação: ${log.notes}`}>
                                         <FileTextIcon />
@@ -613,8 +767,10 @@ const EmployeeDashboard: React.FC<{ user: User, currentUserRole: Role, isDark: b
             </div>
             
             <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-700 mt-2">
-                <Button variant="ghost" onClick={() => setIsRegisterModalOpen(false)}>Cancelar</Button>
-                <Button onClick={finalizeRegister} className="px-8">Confirmar</Button>
+                <Button variant="ghost" onClick={() => setIsRegisterModalOpen(false)} disabled={isLocationLoading}>Cancelar</Button>
+                <Button onClick={finalizeRegister} className="px-8" isLoading={isLocationLoading}>
+                    {isLocationLoading ? 'Obtendo Local...' : 'Confirmar'}
+                </Button>
             </div>
         </div>
       </Modal>
@@ -664,12 +820,23 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
     }, []);
 
     const handleAddUser = () => {
-        if (!newUser.name || !newUser.email || !newUser.password) return;
+        // Validação Explícita para evitar falhas silenciosas
+        if (!newUser.name || !newUser.password) {
+            alert("Por favor, preencha o Nome e o Código (Senha).");
+            return;
+        }
+
+        // Auto-completar email para funcionários que usam nome/código
+        let finalEmail = newUser.email;
+        if (!finalEmail) {
+            const cleanName = newUser.name.toLowerCase().replace(/\s+/g, '.');
+            finalEmail = `${cleanName}@interno.com`;
+        }
         
         const user: User = {
             id: generateId(),
             name: newUser.name,
-            email: newUser.email,
+            email: finalEmail,
             password: newUser.password,
             role: newUser.role || Role.EMPLOYEE,
             position: newUser.position || 'Funcionário'
@@ -822,12 +989,14 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                         value={newUser.name || ''} onChange={e => setNewUser({...newUser, name: e.target.value})} 
                     />
                     <input 
-                        type="email" placeholder="Email Corporativo" 
+                        type="email" placeholder="Email Corporativo (Opcional para funcionários)" 
                         className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white" 
                         value={newUser.email || ''} onChange={e => setNewUser({...newUser, email: e.target.value})} 
                     />
                     <input 
-                        type="password" placeholder="Senha Inicial" 
+                        type="text" 
+                        placeholder="Código Numérico (Senha)" 
+                        inputMode="numeric"
                         className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white dark:bg-slate-800 dark:text-white" 
                         value={newUser.password || ''} onChange={e => setNewUser({...newUser, password: e.target.value})} 
                     />
@@ -1093,7 +1262,7 @@ const App: React.FC = () => {
                 <AdminDashboard isDark={theme === 'dark'} />
              </div>
         ) : (
-            <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} isDark={theme === 'dark'} />
+            <EmployeeDashboard user={authState.user} currentUserRole={Role.EMPLOYEE} isDark={theme === 'dark'} onLogout={handleLogout} />
         )}
       </main>
 
