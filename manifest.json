@@ -1,44 +1,21 @@
 {
   "name": "PontoCerto - Sistema de Ponto",
   "short_name": "PontoCerto",
-  "version": "1.0.1",
-  "manifest_version": 3,
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
   "description": "Sistema completo de registro de ponto eletrônico com gestão de funcionários.",
-  "permissions": [
-    "storage",
-    "notifications",
-    "identity",
-    "alarms"
-  ],
-  "host_permissions": [
-    "https://*.google.com/"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "action": {
-    "default_popup": "index.html",
-    "default_title": "Abrir PontoCerto"
-  },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
-  },
-  "oauth2": {
-    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile"
-    ]
-  },
-  "icons": {
-    "16": "logo192.png",
-    "48": "logo192.png",
-    "128": "logo192.png"
-  },
-  "web_accessible_resources": [
+  "icons": [
     {
-      "resources": ["index.html", "logo192.png"],
-      "matches": ["<all_urls>"]
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo192.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
