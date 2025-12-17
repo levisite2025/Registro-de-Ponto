@@ -1,6 +1,7 @@
 import { User } from '../types';
-import { generateId } from './storageService';
+import { generateId, getSettings } from './storageService';
 import { sendChromeNotification } from './chromeService';
+import emailjs from '@emailjs/browser';
 
 export interface EmailNotification {
   id: string;
@@ -30,14 +31,43 @@ export const sendEmail = (to: string, subject: string, body: string) => {
     read: false
   };
   
-  // Add to beginning of list
+  // 1. Salva na notificação interna (Fallback sempre garantido)
   notifications.unshift(newEmail);
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
   
   // Disparar notificação nativa (Chrome ou Web)
   sendChromeNotification(id, `Nova Mensagem: ${subject}`, body.substring(0, 80) + '...');
   
-  console.log(`[EMAIL ENVIADO] Para: ${to} | Assunto: ${subject}`);
+  console.log(`[SISTEMA INTERNO] Notificação salva para: ${to}`);
+
+  // 2. Tenta enviar E-mail Real via EmailJS (Se configurado)
+  const settings = getSettings();
+  
+  if (settings.emailJsServiceId && settings.emailJsTemplateId && settings.emailJsPublicKey) {
+      console.log("Tentando enviar e-mail real via EmailJS...");
+      
+      const templateParams = {
+          to_email: to,
+          subject: subject,
+          message: body
+      };
+
+      emailjs.send(
+          settings.emailJsServiceId,
+          settings.emailJsTemplateId,
+          templateParams,
+          settings.emailJsPublicKey
+      )
+      .then((response) => {
+         console.log('EMAIL REAL ENVIADO COM SUCESSO!', response.status, response.text);
+      })
+      .catch((err) => {
+         console.error('FALHA AO ENVIAR EMAIL REAL:', err);
+         // Não alertamos o usuário final para não interromper o fluxo, mas o admin pode ver no console
+      });
+  } else {
+      console.warn("EmailJS não configurado. O e-mail real não foi enviado (apenas notificação interna). Configure nas opções de Administrador.");
+  }
 };
 
 export const markAllAsRead = () => {

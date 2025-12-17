@@ -4,6 +4,7 @@ import { syncToChromeStorage, getFromChromeStorage } from './chromeService';
 const USERS_KEY = 'pontocerto_users';
 const LOGS_KEY = 'pontocerto_logs';
 const SETTINGS_KEY = 'pontocerto_settings';
+const NOTIFICATIONS_KEY = 'pontocerto_notifications';
 
 // Helper for ID generation compatible with all contexts (HTTP/HTTPS)
 export const generateId = (): string => {
@@ -127,11 +128,53 @@ export const getSettings = (): CompanySettings => {
     workStart: "08:00",
     workEnd: "17:00",
     lunchStart: "12:00",
-    lunchEnd: "13:00"
+    lunchEnd: "13:00",
+    emailJsServiceId: "",
+    emailJsTemplateId: "",
+    emailJsPublicKey: ""
   };
 };
 
 export const saveSettings = (settings: CompanySettings): void => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   syncToChromeStorage(SETTINGS_KEY, settings);
+};
+
+// --- BACKUP & RESTORE FUNCTIONS ---
+
+export const getAllData = () => {
+  return {
+    users: getUsers(),
+    logs: getLogs(),
+    settings: getSettings(),
+    notifications: JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]')
+  };
+};
+
+export const importData = (jsonData: string): boolean => {
+  try {
+    const data = JSON.parse(jsonData);
+    
+    // Basic validation
+    if (!data.users || !Array.isArray(data.users)) throw new Error("Dados de usuários inválidos");
+    if (!data.logs || !Array.isArray(data.logs)) throw new Error("Dados de registros inválidos");
+    if (!data.settings) throw new Error("Configurações inválidas");
+
+    localStorage.setItem(USERS_KEY, JSON.stringify(data.users));
+    localStorage.setItem(LOGS_KEY, JSON.stringify(data.logs));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+    if (data.notifications) {
+      localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(data.notifications));
+    }
+
+    // Sync to Chrome Backup as well
+    syncToChromeStorage(USERS_KEY, data.users);
+    syncToChromeStorage(LOGS_KEY, data.logs);
+    syncToChromeStorage(SETTINGS_KEY, data.settings);
+
+    return true;
+  } catch (e) {
+    console.error("Erro ao importar dados:", e);
+    return false;
+  }
 };

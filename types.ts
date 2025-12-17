@@ -15,6 +15,10 @@ export interface CompanySettings {
   workEnd: string;   // e.g. "17:00"
   lunchStart: string; // e.g. "12:00"
   lunchEnd: string;   // e.g. "13:00"
+  // EmailJS Configuration for Real Emails
+  emailJsServiceId?: string;
+  emailJsTemplateId?: string;
+  emailJsPublicKey?: string;
 }
 
 export interface User {

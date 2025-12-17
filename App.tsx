@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AuthState, User, Role, TimeLog, LogType, CompanySettings, GeoLocation } from './types';
-import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings, generateId } from './services/storageService';
+import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserLogs, deleteLog, getSettings, saveSettings, generateId, getAllData, importData } from './services/storageService';
 import { generateMonthlyReportAnalysis } from './services/geminiService';
 import { sendEmail, getNotifications, markAllAsRead, checkEndOfDayReminder, EmailNotification, clearNotifications } from './services/notificationService';
 import { generateEmployeePDF } from './services/pdfService';
@@ -31,6 +31,8 @@ const MoonIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height
 const CoffeeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>;
 const FileTextIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
 const MapPinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
+const UploadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
 
 // --- HELPER COMPONENTS ---
 
@@ -875,6 +877,36 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
       generateEmployeePDF(user, userLogs, settings);
     };
 
+    const handleExportData = () => {
+        const data = getAllData();
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `backup_pontocerto_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target?.result as string;
+            if (importData(content)) {
+                alert("Dados restaurados com sucesso! A página será recarregada.");
+                window.location.reload();
+            } else {
+                alert("Erro ao importar dados. Verifique se o arquivo é válido.");
+            }
+        };
+        reader.readAsText(file);
+    };
+
     if (selectedUserForView) {
         return (
             <div className="animate-fade-in">
@@ -970,7 +1002,7 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                                         <button onClick={(e) => handleGeneratePDF(e, u)} className="text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 p-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors" title="Gerar Relatório PDF">
                                             <PdfIcon />
                                         </button>
-                                        <button onClick={() => handleDelete(u.id)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir Funcionário">
+                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir Funcionário">
                                             <TrashIcon />
                                         </button>
                                     </div>
@@ -1023,56 +1055,108 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                 </div>
             </Modal>
 
-            {/* Settings Modal */}
+            {/* Settings Modal with Backup/Restore AND EmailJS Config */}
             <Modal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} title="Parâmetros da Clínica">
                 <div className="space-y-6">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Defina os horários de funcionamento do Espaço Hidro para a análise automática.</p>
-                    
-                    <div className="grid grid-cols-2 gap-5">
-                        <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Entrada Padrão</label>
-                            <input 
-                                type="time" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
-                                value={settings.workStart}
-                                onChange={e => setSettingsState({...settings, workStart: e.target.value})}
-                            />
+                    <div className="space-y-4">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm uppercase">Horários de Trabalho</h4>
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Entrada Padrão</label>
+                                <input 
+                                    type="time" 
+                                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
+                                    value={settings.workStart}
+                                    onChange={e => setSettingsState({...settings, workStart: e.target.value})}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Saída Padrão</label>
+                                <input 
+                                    type="time" 
+                                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
+                                    value={settings.workEnd}
+                                    onChange={e => setSettingsState({...settings, workEnd: e.target.value})}
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Saída Padrão</label>
-                            <input 
-                                type="time" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
-                                value={settings.workEnd}
-                                onChange={e => setSettingsState({...settings, workEnd: e.target.value})}
-                            />
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Início Almoço</label>
+                                <input 
+                                    type="time" 
+                                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
+                                    value={settings.lunchStart}
+                                    onChange={e => setSettingsState({...settings, lunchStart: e.target.value})}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Fim Almoço</label>
+                                <input 
+                                    type="time" 
+                                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
+                                    value={settings.lunchEnd}
+                                    onChange={e => setSettingsState({...settings, lunchEnd: e.target.value})}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-5">
-                        <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Início Almoço</label>
-                            <input 
-                                type="time" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
-                                value={settings.lunchStart}
-                                onChange={e => setSettingsState({...settings, lunchStart: e.target.value})}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Fim Almoço</label>
-                            <input 
-                                type="time" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 focus:ring-brand-500 focus:border-brand-500 outline-none bg-slate-50 dark:bg-slate-900 dark:text-white"
-                                value={settings.lunchEnd}
-                                onChange={e => setSettingsState({...settings, lunchEnd: e.target.value})}
-                            />
+                    <div className="border-t border-slate-100 dark:border-slate-700 pt-6 space-y-4">
+                         <h4 className="font-bold text-slate-800 dark:text-white text-sm uppercase flex items-center justify-between">
+                            Configuração de E-mail (EmailJS)
+                            <a href="https://www.emailjs.com/" target="_blank" className="text-xs text-brand-600 hover:underline normal-case font-normal">Criar conta grátis &rarr;</a>
+                         </h4>
+                         <p className="text-xs text-slate-500 dark:text-slate-400">Para enviar e-mails reais, configure sua conta EmailJS. Se deixar em branco, o sistema usará apenas notificações internas.</p>
+                         
+                         <div className="grid grid-cols-1 gap-3">
+                             <input 
+                                type="text" placeholder="Service ID (ex: service_xxxx)" 
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-900 dark:text-white text-sm"
+                                value={settings.emailJsServiceId || ''}
+                                onChange={e => setSettingsState({...settings, emailJsServiceId: e.target.value})}
+                             />
+                             <input 
+                                type="text" placeholder="Template ID (ex: template_xxxx)" 
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-900 dark:text-white text-sm"
+                                value={settings.emailJsTemplateId || ''}
+                                onChange={e => setSettingsState({...settings, emailJsTemplateId: e.target.value})}
+                             />
+                             <input 
+                                type="password" placeholder="Public Key (ex: user_xxxx)" 
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-900 dark:text-white text-sm"
+                                value={settings.emailJsPublicKey || ''}
+                                onChange={e => setSettingsState({...settings, emailJsPublicKey: e.target.value})}
+                             />
+                         </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 dark:border-slate-700 pt-6 space-y-4">
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm uppercase">Gerenciamento de Dados</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Use estas opções para transferir dados entre dispositivos (Ex: PC para Celular). Exporte aqui e importe no outro aparelho.</p>
+                        
+                        <div className="flex gap-3">
+                            <Button variant="outline" onClick={handleExportData} className="w-full text-xs py-3 flex items-center justify-center gap-2">
+                                <DownloadIcon /> Exportar Backup
+                            </Button>
+                            <div className="relative w-full">
+                                <input 
+                                    type="file" 
+                                    accept=".json" 
+                                    onChange={handleImportData}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <Button variant="outline" className="w-full text-xs py-3 flex items-center justify-center gap-2">
+                                    <UploadIcon /> Restaurar Backup
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
                     <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100 dark:border-slate-700">
                         <Button variant="ghost" onClick={() => setIsSettingsModalOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSaveSettings}>Salvar Parâmetros</Button>
+                        <Button onClick={handleSaveSettings}>Salvar Alterações</Button>
                     </div>
                 </div>
             </Modal>
