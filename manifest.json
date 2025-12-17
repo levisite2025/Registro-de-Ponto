@@ -4,12 +4,12 @@
   "version": "1.0.0",
   "manifest_version": 3,
   "description": "Sistema completo de registro de ponto eletrônico com gestão de funcionários.",
+  "offline_enabled": true,
   "permissions": [
     "storage",
     "notifications",
     "identity",
-    "alarms",
-    "system.network"
+    "alarms"
   ],
   "host_permissions": [
     "https://*.google.com/"
