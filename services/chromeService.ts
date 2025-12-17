@@ -17,7 +17,9 @@ const getBrowserAPI = () => {
 
 export const isExtension = (): boolean => {
   const api = getBrowserAPI();
-  return !!(api && api.runtime && api.runtime.id);
+  // CRITICAL FIX: Uso de optional chaining (?.) para evitar erro em abas normais do Chrome
+  // Em uma aba normal, api (window.chrome) existe, mas api.runtime é undefined.
+  return !!(api?.runtime?.id);
 };
 
 // Mantemos isChromeApp para compatibilidade com código existente, mas usando a nova detecção
@@ -26,7 +28,7 @@ export const isChromeApp = isExtension;
 // --- NOTIFICATIONS (Chrome & Edge) ---
 export const sendChromeNotification = (id: string, title: string, message: string) => {
   const api = getBrowserAPI();
-  if (isExtension() && api.notifications) {
+  if (isExtension() && api?.notifications) {
     api.notifications.create(id, {
       type: 'basic',
       iconUrl: 'logo192.png', // Placeholder icon
@@ -52,7 +54,7 @@ export const sendChromeNotification = (id: string, title: string, message: strin
 // Funciona com chrome.storage ou browser.storage
 export const syncToChromeStorage = (key: string, data: any) => {
   const api = getBrowserAPI();
-  if (isExtension() && api.storage) {
+  if (isExtension() && api?.storage) {
     api.storage.local.set({ [key]: data }, () => {
       // Chrome usa callback, Browser usa Promise, mas Chrome também aceita callback no Edge
       if (api.runtime.lastError) {
@@ -65,7 +67,7 @@ export const syncToChromeStorage = (key: string, data: any) => {
 export const getFromChromeStorage = (key: string): Promise<any> => {
   return new Promise((resolve) => {
     const api = getBrowserAPI();
-    if (isExtension() && api.storage) {
+    if (isExtension() && api?.storage) {
       api.storage.local.get([key], (result: any) => {
         resolve(result[key] || null);
       });
@@ -79,7 +81,7 @@ export const getFromChromeStorage = (key: string): Promise<any> => {
 export const getChromeIdentity = (): Promise<{email?: string, id?: string} | null> => {
   return new Promise((resolve) => {
     const api = getBrowserAPI();
-    if (isExtension() && api.identity) {
+    if (isExtension() && api?.identity) {
       // Edge e Chrome suportam getProfileUserInfo
       api.identity.getProfileUserInfo((userInfo: any) => {
         if (userInfo && userInfo.email) {
@@ -115,13 +117,13 @@ export const initRuntimeListeners = () => {
   const api = getBrowserAPI();
   
   // Suporte a Chrome Apps Legado (apenas se existir a API específica)
-  if (api && api.app && api.app.runtime && api.app.runtime.onLaunched) {
+  if (api?.app?.runtime?.onLaunched) {
     api.app.runtime.onLaunched.addListener(() => {
        console.log("App iniciado via Runtime (Chrome App Legacy)");
     });
   }
   
-  if (isExtension() && api.runtime) {
+  if (isExtension() && api?.runtime) {
     // Listeners genéricos de extensão (Chrome + Edge)
     if (api.runtime.onInstalled) {
         api.runtime.onInstalled.addListener(() => {
@@ -146,7 +148,7 @@ export const initNetworkMonitor = () => {
       // mas verificamos a existência antes de usar para evitar erros no Edge.
       
       // @ts-ignore
-      if (api.system && api.system.network) {
+      if (api?.system?.network) {
           // @ts-ignore
           api.system.network.getNetworkInterfaces((interfaces) => {
               console.log("Interfaces de Rede detectadas (Extensão):", interfaces);
@@ -155,7 +157,7 @@ export const initNetworkMonitor = () => {
       
       // Stub para Sockets TCP
       // @ts-ignore
-      if (api.sockets && api.sockets.tcp) {
+      if (api?.sockets?.tcp) {
         console.log("API de Sockets TCP disponível.");
       }
   }
