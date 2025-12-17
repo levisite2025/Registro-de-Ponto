@@ -1,7 +1,7 @@
 {
   "name": "PontoCerto - Sistema de Ponto",
   "short_name": "PontoCerto",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0ea5e9",
