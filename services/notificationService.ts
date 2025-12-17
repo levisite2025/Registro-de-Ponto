@@ -1,7 +1,6 @@
 import { User } from '../types';
 import { generateId, getSettings } from './storageService';
 import { sendChromeNotification } from './chromeService';
-import emailjs from '@emailjs/browser';
 
 export interface EmailNotification {
   id: string;
@@ -19,7 +18,7 @@ export const getNotifications = (): EmailNotification[] => {
   return stored ? JSON.parse(stored) : [];
 };
 
-// Agora retorna uma Promise<boolean> para saber se foi sucesso ou falha
+// Retorna Promise<boolean> para manter compatibilidade com UI (sempre true pois é interno)
 export const sendEmail = async (to: string, subject: string, body: string): Promise<boolean> => {
   const notifications = getNotifications();
   const id = generateId();
@@ -32,7 +31,7 @@ export const sendEmail = async (to: string, subject: string, body: string): Prom
     read: false
   };
   
-  // 1. Salva na notificação interna (Fallback sempre garantido)
+  // 1. Salva na notificação interna (Simulação do envio)
   notifications.unshift(newEmail);
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
   
@@ -41,35 +40,10 @@ export const sendEmail = async (to: string, subject: string, body: string): Prom
   
   console.log(`[SISTEMA INTERNO] Notificação salva para: ${to}`);
 
-  // 2. Tenta enviar E-mail Real via EmailJS (Se configurado)
-  const settings = getSettings();
-  
-  if (settings.emailJsServiceId && settings.emailJsTemplateId && settings.emailJsPublicKey) {
-      console.log("Tentando enviar e-mail real via EmailJS...");
-      
-      const templateParams = {
-          to_email: to,
-          subject: subject,
-          message: body
-      };
+  // Simula um pequeno delay de rede para feedback visual na UI
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-      try {
-          const response = await emailjs.send(
-              settings.emailJsServiceId,
-              settings.emailJsTemplateId,
-              templateParams,
-              settings.emailJsPublicKey
-          );
-          console.log('EMAIL REAL ENVIADO COM SUCESSO!', response.status, response.text);
-          return true;
-      } catch (err) {
-         console.error('FALHA AO ENVIAR EMAIL REAL:', err);
-         return false;
-      }
-  } else {
-      console.warn("EmailJS não configurado. O e-mail real não foi enviado (apenas notificação interna).");
-      return true; // Retorna true pois o fallback interno funcionou
-  }
+  return true; 
 };
 
 export const markAllAsRead = () => {

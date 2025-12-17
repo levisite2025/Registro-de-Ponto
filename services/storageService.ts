@@ -128,10 +128,7 @@ export const getSettings = (): CompanySettings => {
     workStart: "08:00",
     workEnd: "17:00",
     lunchStart: "12:00",
-    lunchEnd: "13:00",
-    emailJsServiceId: "",
-    emailJsTemplateId: "",
-    emailJsPublicKey: ""
+    lunchEnd: "13:00"
   };
 };
 

@@ -1047,7 +1047,7 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                 </div>
             </Modal>
 
-            {/* Settings Modal with Backup/Restore AND EmailJS Config */}
+            {/* Settings Modal with Backup/Restore ONLY (EmailJS removed) */}
             <Modal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} title="Parâmetros da Clínica">
                 <div className="space-y-6">
                     <div className="space-y-4">
@@ -1093,35 +1093,6 @@ const AdminDashboard: React.FC<{ isDark: boolean }> = ({ isDark }) => {
                                 />
                             </div>
                         </div>
-                    </div>
-
-                    <div className="border-t border-slate-100 dark:border-slate-700 pt-6 space-y-4">
-                         <h4 className="font-bold text-slate-800 dark:text-white text-sm uppercase flex items-center justify-between">
-                            Configuração de E-mail (EmailJS)
-                            <a href="https://www.emailjs.com/" target="_blank" className="text-xs text-brand-600 hover:underline normal-case font-normal">Criar conta grátis &rarr;</a>
-                         </h4>
-                         <p className="text-xs text-slate-500 dark:text-slate-400">Para enviar e-mails reais, configure sua conta EmailJS. Se deixar em branco, o sistema usará apenas notificações internas.</p>
-                         
-                         <div className="grid grid-cols-1 gap-3">
-                             <input 
-                                type="text" placeholder="Service ID (ex: service_xxxx)" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-900 dark:text-white text-sm"
-                                value={settings.emailJsServiceId || ''}
-                                onChange={e => setSettingsState({...settings, emailJsServiceId: e.target.value})}
-                             />
-                             <input 
-                                type="text" placeholder="Template ID (ex: template_xxxx)" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-900 dark:text-white text-sm"
-                                value={settings.emailJsTemplateId || ''}
-                                onChange={e => setSettingsState({...settings, emailJsTemplateId: e.target.value})}
-                             />
-                             <input 
-                                type="password" placeholder="Public Key (ex: user_xxxx)" 
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-slate-50 dark:bg-slate-900 dark:text-white text-sm"
-                                value={settings.emailJsPublicKey || ''}
-                                onChange={e => setSettingsState({...settings, emailJsPublicKey: e.target.value})}
-                             />
-                         </div>
                     </div>
 
                     <div className="border-t border-slate-100 dark:border-slate-700 pt-6 space-y-4">
