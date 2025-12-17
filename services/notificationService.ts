@@ -1,5 +1,6 @@
 import { User } from '../types';
 import { generateId } from './storageService';
+import { sendChromeNotification } from './chromeService';
 
 export interface EmailNotification {
   id: string;
@@ -19,8 +20,9 @@ export const getNotifications = (): EmailNotification[] => {
 
 export const sendEmail = (to: string, subject: string, body: string) => {
   const notifications = getNotifications();
+  const id = generateId();
   const newEmail: EmailNotification = {
-    id: generateId(),
+    id,
     to,
     subject,
     body,
@@ -32,7 +34,9 @@ export const sendEmail = (to: string, subject: string, body: string) => {
   notifications.unshift(newEmail);
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
   
-  // Simulate a browser toast/alert for demo purposes (optional)
+  // Disparar notificação nativa (Chrome ou Web)
+  sendChromeNotification(id, `Nova Mensagem: ${subject}`, body.substring(0, 80) + '...');
+  
   console.log(`[EMAIL ENVIADO] Para: ${to} | Assunto: ${subject}`);
 };
 

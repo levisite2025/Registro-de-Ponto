@@ -1,4 +1,5 @@
 import { User, TimeLog, Role, LogType, CompanySettings } from '../types';
+import { syncToChromeStorage, getFromChromeStorage } from './chromeService';
 
 const USERS_KEY = 'pontocerto_users';
 const LOGS_KEY = 'pontocerto_logs';
@@ -19,9 +20,20 @@ export const generateId = (): string => {
 };
 
 // Initialize with default admin if empty
-export const initStorage = () => {
-  const users = localStorage.getItem(USERS_KEY);
-  if (!users) {
+// Try to sync from Chrome storage if local storage is empty
+export const initStorage = async () => {
+  let usersStr = localStorage.getItem(USERS_KEY);
+  
+  // Tentar recuperar do Chrome Storage se LocalStorage estiver vazio (Cenário: Limpeza de cache ou novo dispositivo sincronizado)
+  if (!usersStr) {
+    const chromeUsers = await getFromChromeStorage(USERS_KEY);
+    if (chromeUsers) {
+      usersStr = JSON.stringify(chromeUsers);
+      localStorage.setItem(USERS_KEY, usersStr);
+    }
+  }
+
+  if (!usersStr) {
     const adminUser: User = {
       id: '1',
       name: 'Administrador',
@@ -30,7 +42,17 @@ export const initStorage = () => {
       role: Role.ADMIN,
       position: 'Gerente'
     };
-    localStorage.setItem(USERS_KEY, JSON.stringify([adminUser]));
+    const initialUsers = [adminUser];
+    localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers));
+    syncToChromeStorage(USERS_KEY, initialUsers);
+  }
+  
+  // Sync Logs as well
+  if (!localStorage.getItem(LOGS_KEY)) {
+      const chromeLogs = await getFromChromeStorage(LOGS_KEY);
+      if (chromeLogs) {
+          localStorage.setItem(LOGS_KEY, JSON.stringify(chromeLogs));
+      }
   }
 };
 
@@ -49,11 +71,14 @@ export const saveUser = (user: User): void => {
     users.push(user);
   }
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  // Backup to Chrome Storage
+  syncToChromeStorage(USERS_KEY, users);
 };
 
 export const deleteUser = (userId: string): void => {
   const users = getUsers().filter(u => u.id !== userId);
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  syncToChromeStorage(USERS_KEY, users);
 };
 
 export const getLogs = (): TimeLog[] => {
@@ -71,6 +96,7 @@ export const saveLog = (log: TimeLog): void => {
     logs.push(log);
   }
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+  syncToChromeStorage(LOGS_KEY, logs);
 };
 
 export const getUserLogs = (userId: string): TimeLog[] => {
@@ -80,6 +106,7 @@ export const getUserLogs = (userId: string): TimeLog[] => {
 export const deleteLog = (logId: string): void => {
   const logs = getLogs().filter(l => l.id !== logId);
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+  syncToChromeStorage(LOGS_KEY, logs);
 };
 
 export const getSettings = (): CompanySettings => {
@@ -97,4 +124,5 @@ export const getSettings = (): CompanySettings => {
 
 export const saveSettings = (settings: CompanySettings): void => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  syncToChromeStorage(SETTINGS_KEY, settings);
 };

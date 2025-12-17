@@ -4,6 +4,7 @@ import { initStorage, getUsers, getLogs, saveLog, saveUser, deleteUser, getUserL
 import { generateMonthlyReportAnalysis } from './services/geminiService';
 import { sendEmail, getNotifications, markAllAsRead, checkEndOfDayReminder, EmailNotification, clearNotifications } from './services/notificationService';
 import { generateEmployeePDF } from './services/pdfService';
+import { initRuntimeListeners, initNetworkMonitor, getChromeIdentity } from './services/chromeService';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -35,6 +36,17 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [chromeUser, setChromeUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Tenta identificar usuário via Chrome Identity
+    getChromeIdentity().then(info => {
+      if (info && info.email) {
+        setChromeUser(info.email);
+        setEmail(info.email);
+      }
+    });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +87,12 @@ const Login: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
         <div className="md:w-1/2 p-8 md:p-12">
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 text-center md:text-left">Bem-vindo de volta</h2>
             
+            {chromeUser && (
+               <div className="mb-4 p-3 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 text-sm rounded-lg flex items-center">
+                 <UserIcon /> <span className="ml-2">Identificado via Chrome: {chromeUser}</span>
+               </div>
+            )}
+
             <form className="space-y-5" onSubmit={handleSubmit}>
             {error && <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 text-sm p-3 rounded-lg border border-red-100 dark:border-red-900/50 flex items-center justify-center">{error}</div>}
             <div>
@@ -901,6 +919,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     initStorage();
+    
+    // Inicializar listeners do Chrome (se disponível)
+    initRuntimeListeners();
+    initNetworkMonitor();
+
     const interval = setInterval(() => {
         setNotificationCount(getNotifications().length);
     }, 2000);
