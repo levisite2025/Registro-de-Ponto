@@ -17,7 +17,7 @@ const COMPANY_LOGO = "https://placehold.co/300x100/ffffff/004aad/png?text=Espaco
 const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
 const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const LogOutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
-const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>;
 const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
 const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
 const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></svg>;
@@ -653,24 +653,37 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
                     ) : filteredLogs.map(log => {
                         const deviation = getTimeDeviation(log, settings);
                         return (
-                        <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
+                        <tr key={log.id} className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group ${deviation ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}>
                             <td className="p-4 font-medium text-slate-800 dark:text-slate-200">{new Date(log.timestamp).toLocaleDateString('pt-BR')}</td>
                             <td className="p-4">
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
                                     {deviation && (
-                                        <span className="text-xs text-red-500 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full">
+                                        <div className="flex items-center text-xs text-red-500 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded-full animate-pulse">
+                                            <div className="scale-75 mr-0.5"><AlertCircleIcon /></div>
                                             {deviation.label}
-                                        </span>
+                                        </div>
                                     )}
                                 </div>
                             </td>
                             <td className="p-4"><LogBadge type={log.type} /></td>
                             <td className="p-4">
-                                <div className="flex items-center gap-2">
-                                {log.edited ? <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full font-medium border border-amber-100 dark:border-amber-900/30">Corrigido</span> : <span className="text-xs text-slate-400">-</span>}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                {log.edited && <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full font-medium border border-amber-100 dark:border-amber-900/30">Corrigido</span>}
+                                {deviation && (
+                                    <span className={`text-xs px-2 py-1 rounded-full font-bold border ${deviation.status === 'late' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300'}`}>
+                                        {deviation.status === 'late' ? 'Atraso' : 'Saída Antecipada'}
+                                    </span>
+                                )}
+                                {!log.edited && !deviation && <span className="text-xs text-slate-400">-</span>}
                                 {log.location && (
-                                    <a href={`https://www.google.com/maps?q=${log.location.latitude},${log.location.longitude}`} target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-600 transition-colors" title="Ver Localização">
+                                    <a 
+                                        href={`https://www.google.com/maps?q=${log.location.latitude},${log.location.longitude}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="text-brand-500 hover:text-brand-700 transition-colors transform hover:scale-110" 
+                                        title={`Coordenadas: ${log.location.latitude}, ${log.location.longitude}\nClique para ver no mapa.`}
+                                    >
                                         <MapPinIcon />
                                     </a>
                                 )}
@@ -692,6 +705,44 @@ Este é um comprovante digital gerado automaticamente pelo sistema PontoCerto.
                 </tbody>
                 </table>
             </div>
+            </div>
+
+            {/* Mobile Cards for History (Integrated click logic) */}
+            <div className="block sm:hidden space-y-4">
+                {filteredLogs.map(log => {
+                     const deviation = getTimeDeviation(log, settings);
+                     return (
+                         <div key={log.id} className={`bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex justify-between items-center ${deviation ? 'ring-2 ring-amber-100 dark:ring-amber-900/30' : ''}`}>
+                             <div className="flex-1">
+                                 <div className="flex items-center gap-2 mb-1">
+                                     <span className="font-bold text-slate-800 dark:text-slate-200">{new Date(log.timestamp).toLocaleDateString('pt-BR')}</span>
+                                     <span className={`text-xs font-mono px-2 py-0.5 rounded ${deviation ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>{new Date(log.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
+                                     {deviation && <div className="text-red-500 scale-75 animate-pulse"><AlertCircleIcon /></div>}
+                                 </div>
+                                 <div className="flex items-center gap-2 flex-wrap mt-2">
+                                    <LogBadge type={log.type} />
+                                    {deviation && (
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${deviation.status === 'late' ? 'bg-amber-100 text-amber-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            {deviation.status === 'late' ? 'Atraso' : 'Antecipado'}
+                                        </span>
+                                    )}
+                                    {log.location && (
+                                        <a 
+                                            href={`https://www.google.com/maps?q=${log.location.latitude},${log.location.longitude}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="inline-flex items-center text-brand-500 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg text-xs font-semibold"
+                                            title={`Lat: ${log.location.latitude}, Lng: ${log.location.longitude}`}
+                                        >
+                                            <div className="scale-75 mr-1"><MapPinIcon /></div> Local
+                                        </a>
+                                    )}
+                                 </div>
+                             </div>
+                             <button onClick={() => handleEdit(log)} className="p-2 text-slate-400 hover:text-brand-600"><EditIcon /></button>
+                         </div>
+                     );
+                })}
             </div>
         </div>
 

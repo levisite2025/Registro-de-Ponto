@@ -106,9 +106,11 @@ export const generateEmployeePDF = (user: User, logs: TimeLog[], settings: Compa
 
   const tableData = sortedLogs.map(log => {
     const dateObj = new Date(log.timestamp);
-    let notes = log.notes || "";
+    let rowNotes = log.notes || "";
+    
     if (log.location) {
-        notes = notes ? `${notes} (Com Localização)` : "(Com Localização)";
+        const geoInfo = `Coord: ${log.location.latitude.toFixed(5)}, ${log.location.longitude.toFixed(5)}`;
+        rowNotes = rowNotes ? `${rowNotes} (${geoInfo})` : geoInfo;
     }
 
     return [
@@ -116,7 +118,7 @@ export const generateEmployeePDF = (user: User, logs: TimeLog[], settings: Compa
       dateObj.toLocaleTimeString('pt-BR'),
       translateType(log.type),
       log.edited ? "Sim (Ajustado)" : "Original",
-      notes || "-"
+      rowNotes || "-"
     ];
   });
 
